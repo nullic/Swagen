@@ -70,6 +70,7 @@ extension Operation {
             }
         }
 
-        return types.isEmpty ? "[:]" : "[\(types.map({ "\($0): \($1).self" }).joined(separator: ", "))]"
+        let keys = types.keys.sorted()
+        return types.isEmpty ? "[:]" : "[\(keys.map({ "\($0): \(types[$0]!).self" }).joined(separator: ", "))]"
     }
 }

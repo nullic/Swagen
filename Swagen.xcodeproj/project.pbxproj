@@ -29,7 +29,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		07B40A73233C9CF4006C0F49 /* Swagen */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Swagen; sourceTree = BUILT_PRODUCTS_DIR; };
+		07B40A73233C9CF4006C0F49 /* swagen */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = swagen; sourceTree = BUILT_PRODUCTS_DIR; };
 		07B40A76233C9CF4006C0F49 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		07B40A81233CCE29006C0F49 /* SwaggerProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwaggerProcessor.swift; sourceTree = "<group>"; };
 		07B40A83233DDF2E006C0F49 /* SwaggerPrimitives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwaggerPrimitives.swift; sourceTree = "<group>"; };
@@ -61,7 +61,7 @@
 		07B40A74233C9CF4006C0F49 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				07B40A73233C9CF4006C0F49 /* Swagen */,
+				07B40A73233C9CF4006C0F49 /* swagen */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,9 +83,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		07B40A72233C9CF4006C0F49 /* Swagen */ = {
+		07B40A72233C9CF4006C0F49 /* swagen */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 07B40A7A233C9CF4006C0F49 /* Build configuration list for PBXNativeTarget "Swagen" */;
+			buildConfigurationList = 07B40A7A233C9CF4006C0F49 /* Build configuration list for PBXNativeTarget "swagen" */;
 			buildPhases = (
 				07B40A6F233C9CF4006C0F49 /* Sources */,
 				07B40A70233C9CF4006C0F49 /* Frameworks */,
@@ -95,9 +95,9 @@
 			);
 			dependencies = (
 			);
-			name = Swagen;
+			name = swagen;
 			productName = Swagen;
-			productReference = 07B40A73233C9CF4006C0F49 /* Swagen */;
+			productReference = 07B40A73233C9CF4006C0F49 /* swagen */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -128,7 +128,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				07B40A72233C9CF4006C0F49 /* Swagen */,
+				07B40A72233C9CF4006C0F49 /* swagen */,
 			);
 		};
 /* End PBXProject section */
@@ -294,7 +294,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		07B40A7A233C9CF4006C0F49 /* Build configuration list for PBXNativeTarget "Swagen" */ = {
+		07B40A7A233C9CF4006C0F49 /* Build configuration list for PBXNativeTarget "swagen" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				07B40A7B233C9CF4006C0F49 /* Debug */,

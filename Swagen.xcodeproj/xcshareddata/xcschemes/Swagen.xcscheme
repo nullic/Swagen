@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "07B40A72233C9CF4006C0F49"
-               BuildableName = "Swagen"
-               BlueprintName = "Swagen"
+               BuildableName = "swagen"
+               BlueprintName = "swagen"
                ReferencedContainer = "container:Swagen.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "07B40A72233C9CF4006C0F49"
-            BuildableName = "Swagen"
-            BlueprintName = "Swagen"
+            BuildableName = "swagen"
+            BlueprintName = "swagen"
             ReferencedContainer = "container:Swagen.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -68,8 +68,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "07B40A72233C9CF4006C0F49"
-            BuildableName = "Swagen"
-            BlueprintName = "Swagen"
+            BuildableName = "swagen"
+            BlueprintName = "swagen"
             ReferencedContainer = "container:Swagen.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
