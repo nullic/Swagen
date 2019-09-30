@@ -58,4 +58,18 @@ extension Operation {
             return ".requestCompositeParameters(bodyParameters: \(bodyParams), bodyEncoding: JSONEncoding(), urlParameters: \(urlParams))"
         }
     }
+
+    var moyaTaskAuth: String {
+        return (hasAuthorization ? AuthorizationType.custom : AuthorizationType.none).moyaString
+    }
+
+    var moyaResponseMap: String {
+        let types = responses.reduce(into: [String: String]()) { (result, kv) in
+            if kv.value.primitive.type != .none {
+                result[kv.key] = kv.value.primitive.typeSwiftString
+            }
+        }
+
+        return types.isEmpty ? "[:]" : "[\(types.map({ "\($0): \($1).self" }).joined(separator: ", "))]"
+    }
 }

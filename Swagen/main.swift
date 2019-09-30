@@ -18,7 +18,6 @@ if CommandLine.arguments.count < 3 {
     print("\(appName) -ic \"https://api-im-public-stage1.synesis-sport.com/v2/api-docs\" ./output")
     print("\nOptions:")
     print(" i: access level - 'internal'")
-    print(" c: use 'class' modifier insted of 'struct'")
     print(" a: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")
 
 } else if CommandLine.arguments.count <= 4 {
@@ -33,9 +32,8 @@ if CommandLine.arguments.count < 3 {
         output = CommandLine.arguments[3]
     }
 
-    var generatorOpts: SwaggerMoyaGenerator.Options = []
+    var generatorOpts: SwaggerMoyaGenerator.Options = [.responseTypes]
     if options.contains("i") { generatorOpts.insert(.internalLevel) }
-    if options.contains("c") { generatorOpts.insert(.useClass) }
     if options.contains("a") { generatorOpts.insert(.customAuthorization) }
 
     let inputURL: URL
@@ -60,4 +58,8 @@ if CommandLine.arguments.count < 3 {
 
     let generator = SwaggerMoyaGenerator(outputFolder: outputURL, processor: processor, options: generatorOpts)
     generator.run()
+
+    #if DEBUG
+    print(outputURL.path)
+    #endif
 }

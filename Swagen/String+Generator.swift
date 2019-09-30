@@ -40,6 +40,7 @@ import Foundation
 let utilsFile =
 """
 \(genFilePrefix)
+import Moya
 
 extension Dictionary where Key == String, Value == Any? {
     func unopt() -> [String: Any] {
@@ -49,6 +50,10 @@ extension Dictionary where Key == String, Value == Any? {
             }
         }
     }
+}
+
+\(genAccessLevel) protocol TargetTypeResponse: TargetType {
+    var responseTypeMap: [Int: Codable.Type] { get }
 }
 
 """

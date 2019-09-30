@@ -13,7 +13,7 @@ class SwaggerMoyaGenerator {
         let rawValue: Int
 
         static let internalLevel = Options(rawValue: 1 << 0)
-        static let useClass = Options(rawValue: 1 << 1)
+        static let responseTypes = Options(rawValue: 1 << 1)
         static let customAuthorization = Options(rawValue: 1 << 2)
     }
 
@@ -81,7 +81,7 @@ class SwaggerMoyaGenerator {
     private func apiDefenition(name: String, operations: [Operation]) -> String {
         var strings: [String] = []
         
-        // Cases
+        // Defenition
         strings.append("\(genAccessLevel) enum \(name) {")
         strings.append(contentsOf: operations.map({ "\(indent)case \($0.caseDeclaration)" }))
         strings.append("}")
@@ -123,9 +123,21 @@ class SwaggerMoyaGenerator {
         if options.contains(.customAuthorization) {
             strings.append("")
             strings.append("extension \(name): AccessTokenAuthorizable {")
-             strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
+            strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
             strings.append("\(indent)\(indent)switch self {")
-            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \(($0.hasAuthorization ? AuthorizationType.custom : AuthorizationType.none).moyaString)" }))
+            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaTaskAuth)" }))
+            strings.append("\(indent)\(indent)}")
+            strings.append("\(indent)}")
+            strings.append("}")
+        }
+
+        // Responses
+        if options.contains(.responseTypes) {
+            strings.append("")
+            strings.append("extension \(name): TargetTypeResponse {")
+            strings.append("\(indent)\(genAccessLevel) var responseTypeMap: [Int: Codable.Type] {")
+            strings.append("\(indent)\(indent)switch self {")
+            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaResponseMap)" }))
             strings.append("\(indent)\(indent)}")
             strings.append("\(indent)}")
             strings.append("}")
