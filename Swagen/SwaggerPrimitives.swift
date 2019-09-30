@@ -30,6 +30,13 @@ enum ParameterFormat: String {
     case int64
 }
 
+enum AuthorizationType {
+    case none
+    case basic
+    case bearer
+    case custom
+}
+
 class Operation: CustomStringConvertible {
     var description: String {
         return "\(method): \(path) - \(id)"
@@ -44,6 +51,7 @@ class Operation: CustomStringConvertible {
 
     let parameters: [OperationParameter]
     let responses: [String: OperationResult]
+    let hasAuthorization: Bool
 
     init(path: String, method: String, info: [String: Any], processor: SwaggerProcessor) {
         self.path = path
@@ -52,6 +60,8 @@ class Operation: CustomStringConvertible {
         self.descriptionText = info["description"] as? String
         self.tags = info["tags"] as! [String]
         self.parameters = (info["parameters"] as? [[String: Any]] ?? []).map { OperationParameter(info: $0, processor: processor) }
+
+        self.hasAuthorization = info["security"] != nil
 
         var responses: [String: OperationResult] = [:]
         for (key, value) in (info["responses"] as! [String: [String: Any]]) {

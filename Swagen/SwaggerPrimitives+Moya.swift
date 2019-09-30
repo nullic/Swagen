@@ -8,6 +8,17 @@
 
 import Foundation
 
+extension AuthorizationType {
+    var moyaString: String {
+        switch self {
+        case .none: return ".none"
+        case .basic: return ".basic"
+        case .bearer: return ".bearer"
+        case .custom: return ".custom(\"\")"
+        }
+    }
+}
+
 extension Operation {
     var caseName: String {
         return id.loweredFirstLetter.escaped

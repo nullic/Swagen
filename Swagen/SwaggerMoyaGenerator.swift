@@ -9,12 +9,24 @@
 import Foundation
 
 class SwaggerMoyaGenerator {
+    struct Options: OptionSet {
+        let rawValue: Int
+
+        static let internalLevel = Options(rawValue: 1 << 0)
+        static let useClass = Options(rawValue: 1 << 1)
+        static let customAuthorization = Options(rawValue: 1 << 2)
+    }
+
     let processor: SwaggerProcessor
+    let options: Options
     let outputFolder: URL
     let modelsFolder: URL
     let apisFolder: URL
 
-    init(outputFolder: URL, processor: SwaggerProcessor) {
+    init(outputFolder: URL, processor: SwaggerProcessor, options: Options) {
+        genAccessLevel = options.contains(.internalLevel) ? "internal" : "public"
+
+        self.options = options
         self.outputFolder = outputFolder
         self.modelsFolder = outputFolder.appendingPathComponent("Models")
         self.apisFolder = outputFolder.appendingPathComponent("APIs")
@@ -70,16 +82,16 @@ class SwaggerMoyaGenerator {
         var strings: [String] = []
         
         // Cases
-        strings.append("public enum \(name) {")
+        strings.append("\(genAccessLevel) enum \(name) {")
         strings.append(contentsOf: operations.map({ "\(indent)case \($0.caseDeclaration)" }))
         strings.append("}")
         strings.append("")
         
         // Paths
         strings.append("extension \(name): TargetType {")
-        strings.append("\(indent)public var baseURL: URL { return URL(string: \"\(processor.baseURL.absoluteString)\")! }")
+        strings.append("\(indent)\(genAccessLevel) var baseURL: URL { return URL(string: \"\(processor.baseURL.absoluteString)\")! }")
         strings.append("")
-        strings.append("\(indent)public var path: String {")
+        strings.append("\(indent)\(genAccessLevel) var path: String {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \"\($0.path)\"" }))
         strings.append("\(indent)\(indent)}")
@@ -87,25 +99,37 @@ class SwaggerMoyaGenerator {
         strings.append("")
         
         // Requests
-        strings.append("\(indent)public var headers: [String: String]? { return nil }")
+        strings.append("\(indent)\(genAccessLevel) var headers: [String: String]? { return nil }")
         strings.append("")
         
-        strings.append("\(indent)public var method: Moya.Method {")
+        strings.append("\(indent)\(genAccessLevel) var method: Moya.Method {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return .\($0.method.lowercased())" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")
         
-        strings.append("\(indent)public var task: Moya.Task {")
+        strings.append("\(indent)\(genAccessLevel) var task: Moya.Task {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams): return \($0.moyaTask)" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")
         
-        strings.append("\(indent)public var sampleData: Data { return Data() }")
+        strings.append("\(indent)\(genAccessLevel) var sampleData: Data { return Data() }")
         strings.append("}")
+
+        // Authorization
+        if options.contains(.customAuthorization) {
+            strings.append("")
+            strings.append("extension \(name): AccessTokenAuthorizable {")
+             strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
+            strings.append("\(indent)\(indent)switch self {")
+            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \(($0.hasAuthorization ? AuthorizationType.custom : AuthorizationType.none).moyaString)" }))
+            strings.append("\(indent)\(indent)}")
+            strings.append("\(indent)}")
+            strings.append("}")
+        }
 
         return strings.joined(separator: "\n")
     }

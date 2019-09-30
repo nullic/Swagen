@@ -10,6 +10,7 @@ import Foundation
 
 let reserverWords = ["Type", "Self", "self", "Codable"]
 let indent = "    "
+var genAccessLevel = "public"
 
 
 extension String {

@@ -52,7 +52,7 @@ extension PropertyObject {
         guard let values = self.enum else { return nil }
 
         var strings: [String] = []
-        strings.append("\(indent)public enum \(name.capitalizedFirstLetter.escaped): String, Codable {")
+        strings.append("\(indent)\(genAccessLevel) enum \(name.capitalizedFirstLetter.escaped): String, Codable {")
         strings.append(contentsOf: values.sorted().map({ "\(indent)\(indent)case \($0.lowercased()) = \"\($0)\"" }))
         strings.append("\(indent)}\n")
         return strings.joined(separator: "\n")
@@ -70,7 +70,7 @@ extension PropertyObject {
     }
 
     var swiftString: String {
-        return "\(indent)public let \(nameTypeSwiftString)"
+        return "\(indent)\(genAccessLevel) let \(nameTypeSwiftString)"
     }
 }
 
@@ -79,13 +79,13 @@ extension ObjectScheme {
         let sorted = properties.sorted {  $0.name < $1.name }
 
         var strings: [String] = []
-        strings.append("public struct \(title.escaped): Codable {")
+        strings.append("\(genAccessLevel) struct \(title.escaped): Codable {")
         strings.append(contentsOf: sorted.compactMap({ $0.swiftEnum }))
         strings.append(contentsOf: sorted.map({ $0.swiftString }))
         strings.append("")
 
         let params = sorted.map({ $0.nameTypeSwiftString }).joined(separator: ", ")
-        strings.append("\(indent)public init(\(params)) {")
+        strings.append("\(indent)\(genAccessLevel) init(\(params)) {")
         strings.append(contentsOf: sorted.map({ "\(indent)\(indent)self.\($0.name) = \($0.name)" }))
         strings.append("\(indent)}")
 
