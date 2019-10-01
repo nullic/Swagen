@@ -52,8 +52,12 @@ extension Dictionary where Key == String, Value == Any? {
     }
 }
 
+\(genAccessLevel) enum ResponseDecodeError {
+    case unknowCode
+}
+
 \(genAccessLevel) protocol TargetTypeResponse: TargetType {
-    var responseTypeMap: [Int: Codable.Type] { get }
+    func decodeResponse(_ response: Moya.Response) throws -> Any
 }
 
 """

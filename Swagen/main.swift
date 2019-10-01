@@ -19,6 +19,7 @@ if CommandLine.arguments.count < 3 {
     print("\nOptions:")
     print(" i: access level - 'internal'")
     print(" a: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")
+    print(" r: add 'Respoonse' decoding")
 
 } else if CommandLine.arguments.count <= 4 {
     let input, output, options: String
@@ -32,9 +33,10 @@ if CommandLine.arguments.count < 3 {
         output = CommandLine.arguments[3]
     }
 
-    var generatorOpts: SwaggerMoyaGenerator.Options = [.responseTypes]
+    var generatorOpts: SwaggerMoyaGenerator.Options = []
     if options.contains("i") { generatorOpts.insert(.internalLevel) }
     if options.contains("a") { generatorOpts.insert(.customAuthorization) }
+    if options.contains("r") { generatorOpts.insert(.responseTypes) }
 
     let inputURL: URL
     let outputURL: URL

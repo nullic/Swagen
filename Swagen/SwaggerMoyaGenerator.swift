@@ -83,7 +83,7 @@ class SwaggerMoyaGenerator {
         
         // Defenition
         strings.append("\(genAccessLevel) enum \(name) {")
-        strings.append(contentsOf: operations.map({ "\(indent)case \($0.caseDeclaration)" }))
+        strings.append(contentsOf: operations.map({ "\($0.caseDocumetation)\n\(indent)case \($0.caseDeclaration)\n" }))
         strings.append("}")
         strings.append("")
         
@@ -135,7 +135,7 @@ class SwaggerMoyaGenerator {
         if options.contains(.responseTypes) {
             strings.append("")
             strings.append("extension \(name): TargetTypeResponse {")
-            strings.append("\(indent)\(genAccessLevel) var responseTypeMap: [Int: Codable.Type] {")
+            strings.append("\(indent)\(genAccessLevel) func decodeResponse(_ response: Moya.Response) throws -> Any")
             strings.append("\(indent)\(indent)switch self {")
             strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaResponseMap)" }))
             strings.append("\(indent)\(indent)}")

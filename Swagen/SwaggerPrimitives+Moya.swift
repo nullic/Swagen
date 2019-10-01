@@ -24,6 +24,14 @@ extension Operation {
         return id.loweredFirstLetter.escaped
     }
 
+    var caseDocumetation: String {
+        var strings: [String] = []
+        strings.append("\(indent)/// \(descriptionText ?? "")")
+        strings.append("\(indent)/// - respones:")
+        strings.append(contentsOf: responses.map { "\(indent)/// \(indent)- \($0): \($1.primitive.typeSwiftString)" })
+        return strings.joined(separator: "\n")
+    }
+
     var swiftEnum: String? {
         let enums = parameters.compactMap({ $0.swiftEnum })
         return enums.isEmpty ? nil : enums.joined(separator: "\n")
