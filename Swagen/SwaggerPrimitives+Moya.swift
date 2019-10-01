@@ -25,10 +25,11 @@ extension Operation {
     }
 
     var caseDocumetation: String {
+        let keys = responses.keys.sorted()
         var strings: [String] = []
         strings.append("\(indent)/// \(descriptionText ?? "")")
         strings.append("\(indent)/// - respones:")
-        strings.append(contentsOf: responses.map { "\(indent)/// \(indent)- \($0): \($1.primitive.typeSwiftString)" })
+        strings.append(contentsOf: keys.map { "\(indent)/// \(indent)- \($0): \(responses[$0]!.primitive.typeSwiftString)" })
         return strings.joined(separator: "\n")
     }
 
