@@ -52,7 +52,7 @@ extension PropertyObject {
         guard let values = self.enum else { return nil }
 
         var strings: [String] = []
-        strings.append("\(indent)\(genAccessLevel) enum \(name.capitalizedFirstLetter.escaped): String, Codable {")
+        strings.append("\(indent)\(genAccessLevel) enum \(name.capitalizedFirstLetter.escaped): String, CaseIterable, Codable {")
         strings.append(contentsOf: values.sorted().map({ "\(indent)\(indent)case \($0.lowercased()) = \"\($0)\"" }))
         strings.append("\(indent)}\n")
         return strings.joined(separator: "\n")
