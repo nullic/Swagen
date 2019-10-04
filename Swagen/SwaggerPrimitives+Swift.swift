@@ -15,8 +15,8 @@ extension ParameterType {
         case .integer: return "Int"
         case .string: return "String"
         case .boolean: return "Bool"
-        case .object: return "AnyObject"
-        case .array: return "[AnyObject]"
+        case .object: return "AnyObjectValue"
+        case .array: return "[AnyObjectValue]"
         case .number: return "Double"
         }
     }
@@ -40,7 +40,7 @@ extension PrimitiveObject {
         case .integer: return format?.swiftString ?? type.swiftString
         case .string: return type.swiftString
         case .boolean: return type.swiftString
-        case .object: return processor.schemes[schema!]?.title ?? type.swiftString
+        case .object: return (schema != nil ? processor.schemes[schema!]?.title : nil) ?? type.swiftString
         case .array: return "[\(items!.typeSwiftString)]"
         case .number: return format?.swiftString ?? type.swiftString
         }
