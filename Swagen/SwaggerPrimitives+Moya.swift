@@ -19,6 +19,20 @@ extension AuthorizationType {
     }
 }
 
+extension PropertyObject {
+    var moyaFormDataString: String {
+        let dataString: String
+        switch type {
+        case .file:
+            dataString = "MultipartFormData(provider: .file(\(nameSwiftString)), name: \"\(nameSwiftString)\")"
+        default:
+            dataString = "MultipartFormData(provider: .data(String(describing: \(nameSwiftString)).data(using: .utf8)!), name: \"\(nameSwiftString)\")"
+        }
+
+        return required ? dataString : "\(nameSwiftString) == nil ? nil : \(dataString)"
+    }
+}
+
 extension Operation {
     var caseName: String {
         return id.loweredFirstLetter.escaped
@@ -40,7 +54,7 @@ extension Operation {
     
     var sortedParameters: [OperationParameter] {
         return parameters.sorted {
-            if $0.in == $1.in { return $0.name < $1.name}
+            if $0.in == $1.in { return $0.nameSwiftString < $1.nameSwiftString}
             else { return $0.in.rawValue == $1.in.rawValue }
         }
     }
@@ -49,23 +63,41 @@ extension Operation {
         return parameters.isEmpty ? caseName : "\(caseName)(\(sortedParameters.map({ $0.nameTypeSwiftString }).joined(separator: ", ")))"
     }
     
-    var caseWithParams: String {
-        return parameters.isEmpty ? caseName : "\(caseName)(\(sortedParameters.map({ "let \($0.name)" }).joined(separator: ", ")))"
+    func caseWithParams(position: [ParameterPosition]) -> String {
+        let needParams = parameters.contains(where: { position.contains($0.in) })
+        return needParams == false ? caseName : "\(caseName)(\(sortedParameters.map({ position.contains($0.in) ? "let \($0.nameSwiftString)" : "_" }).joined(separator: ", ")))"
     }
     
     var moyaTask: String {
         let body = parameters.filter { $0.in == .body }
         let query = parameters.filter { $0.in == .query }
-        let urlParams = query.isEmpty ? "[:]" : "[\(query.map({ "\"\($0.name)\": \($0.name)" }).joined(separator: ", "))].unopt()"
-        let bodyParams = body.isEmpty ? "[:]" : "[\(body.map({ "\"\($0.name)\": \($0.name)" }).joined(separator: ", "))].unopt()"
-        
-        if body.isEmpty && query.isEmpty {
+        let form = parameters.filter { $0.in == .formData }
+
+        let queryHasOpt = query.contains(where: { $0.required == false })
+        let bodyHasOpt = body.contains(where: { $0.required == false })
+
+        let urlParams = query.isEmpty ? "[:]" : "[\(query.map({ "\"\($0.nameSwiftString)\": \($0.nameSwiftString)" }).joined(separator: ", "))]\(queryHasOpt ? ".unopt()" : "")"
+        let bodyParams = body.isEmpty ? "[:]" : "[\(body.map({ "\"\($0.name)\": \($0.name)" }).joined(separator: ", "))]\(bodyHasOpt ? ".unopt()" : "")"
+        let formParams = form.isEmpty ? "[]" : "[\(form.map({ $0.moyaFormDataString }).joined(separator: ", "))].compactMap({ $0 })"
+
+        if form.isEmpty == false {
+            return ".uploadCompositeMultipart(\(formParams), urlParameters: \(urlParams))"
+        } else if body.isEmpty && query.isEmpty {
             return ".requestPlain"
         } else if body.count == 1, query.isEmpty {
             return ".requestJSONEncodable(\(body[0].name))"
         } else {
             return ".requestCompositeParameters(bodyParameters: \(bodyParams), bodyEncoding: JSONEncoding(), urlParameters: \(urlParams))"
         }
+    }
+
+    var moyaTaskHeaders: String {
+        let header = parameters.filter { $0.in == .header }
+        var headerStrings = header.map({ "(\"\($0.nameSwiftString)\", \($0.nameSwiftString))" })
+        if let type = consumes.first {
+            headerStrings.append("(\"Content-Type\", \"\(type)\")")
+        }
+        return headerStrings.isEmpty ? "nil" : "Dictionary<String, Any?>(dictionaryLiteral: \(headerStrings.joined(separator: ", "))).unoptString()"
     }
 
     var moyaTaskAuth: String {

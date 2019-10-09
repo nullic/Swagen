@@ -18,6 +18,7 @@ extension ParameterType {
         case .object: return "AnyObjectValue"
         case .array: return "[AnyObjectValue]"
         case .number: return "Double"
+        case .file: return "URL"
         }
     }
 }
@@ -43,6 +44,7 @@ extension PrimitiveObject {
         case .object: return (schema != nil ? processor.schemes[schema!]?.title : nil) ?? type.swiftString
         case .array: return "[\(items!.typeSwiftString)]"
         case .number: return format?.swiftString ?? type.swiftString
+        case .file: return type.swiftString
         }
     }
 }
@@ -52,7 +54,7 @@ extension PropertyObject {
         guard let values = self.enum else { return nil }
 
         var strings: [String] = []
-        strings.append("\(indent)\(genAccessLevel) enum \(name.capitalizedFirstLetter.escaped): String, CaseIterable, Codable {")
+        strings.append("\(indent)\(genAccessLevel) enum \(nameSwiftString.capitalizedFirstLetter.escaped): String, CaseIterable, Codable {")
         strings.append(contentsOf: values.sorted().map({ "\(indent)\(indent)case \($0.lowercased()) = \"\($0)\"" }))
         strings.append("\(indent)}\n")
         return strings.joined(separator: "\n")
@@ -60,13 +62,17 @@ extension PropertyObject {
 
     var propertyTypeSwiftString: String {
         switch type {
-        case .string: return self.enum != nil ? name.capitalizedFirstLetter.escaped : type.swiftString
+        case .string: return self.enum != nil ? nameSwiftString.capitalizedFirstLetter.escaped : type.swiftString
         default: return super.typeSwiftString
         }
     }
 
+    var nameSwiftString: String {
+        return name.loweredFirstLetter.escaped
+    }
+
     var nameTypeSwiftString: String {
-        return "\(name): \(propertyTypeSwiftString)\(required ? "" : "?")"
+        return "\(nameSwiftString): \(propertyTypeSwiftString)\(required ? "" : "?")"
     }
 
     var swiftString: String {
@@ -86,7 +92,7 @@ extension ObjectScheme {
 
         let params = sorted.map({ $0.nameTypeSwiftString }).joined(separator: ", ")
         strings.append("\(indent)\(genAccessLevel) init(\(params)) {")
-        strings.append(contentsOf: sorted.map({ "\(indent)\(indent)self.\($0.name) = \($0.name)" }))
+        strings.append(contentsOf: sorted.map({ "\(indent)\(indent)self.\($0.nameSwiftString) = \($0.nameSwiftString)" }))
         strings.append("\(indent)}")
 
         strings.append("}")

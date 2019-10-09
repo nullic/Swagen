@@ -11,6 +11,8 @@ import Foundation
 enum ParameterPosition: String {
     case body
     case query
+    case header
+    case formData
 }
 
 enum ParameterType: String {
@@ -21,6 +23,7 @@ enum ParameterType: String {
     case object
     case array
     case number
+    case file
 }
 
 enum ParameterFormat: String {
@@ -53,6 +56,9 @@ class Operation: CustomStringConvertible {
     let responses: [String: OperationResult]
     let hasAuthorization: Bool
 
+    let consumes: [String]
+    let produces: [String]
+
     init(path: String, method: String, info: [String: Any], processor: SwaggerProcessor) {
         self.path = path
         self.method = method
@@ -60,6 +66,9 @@ class Operation: CustomStringConvertible {
         self.descriptionText = info["description"] as? String
         self.tags = info["tags"] as! [String]
         self.parameters = (info["parameters"] as? [[String: Any]] ?? []).map { OperationParameter(info: $0, processor: processor) }
+
+        self.consumes = info["consumes"] as? [String] ?? []
+        self.produces = info["produces"] as? [String] ?? []
 
         self.hasAuthorization = info["security"] != nil
 

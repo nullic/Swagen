@@ -60,9 +60,14 @@ class SwaggerMoyaGenerator {
 
             let utilsURL = outputFolder.appendingPathComponent("Utils.swift")
             try? FileManager.default.removeItem(at: utilsURL)
-            try utilsFile.data(using: .utf8)?.write(to: utilsURL)
-        
 
+            var utilsStings = utilsFile
+            if options.contains(.responseTypes) {
+                utilsStings.append(contentsOf: targetTypeResponseCode)
+            }
+
+            try utilsStings.data(using: .utf8)?.write(to: utilsURL)
+        
             for (tag, ops) in processor.operationsByTag {
                 let name = tag.capitalized.replacingOccurrences(of: "-", with: "") + "API"
                 let fileURL = apisFolder.appendingPathComponent("\(name).swift")
@@ -98,8 +103,12 @@ class SwaggerMoyaGenerator {
         strings.append("\(indent)}")
         strings.append("")
         
-        // Requests
-        strings.append("\(indent)\(genAccessLevel) var headers: [String: String]? { return nil }")
+        // RequestsneedParams
+        strings.append("\(indent)\(genAccessLevel) var headers: [String: String]? {")
+        strings.append("\(indent)\(indent)switch self {")
+        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.header])): return \($0.moyaTaskHeaders)" }))
+        strings.append("\(indent)\(indent)}")
+        strings.append("\(indent)}")
         strings.append("")
         
         strings.append("\(indent)\(genAccessLevel) var method: Moya.Method {")
@@ -111,7 +120,7 @@ class SwaggerMoyaGenerator {
         
         strings.append("\(indent)\(genAccessLevel) var task: Moya.Task {")
         strings.append("\(indent)\(indent)switch self {")
-        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams): return \($0.moyaTask)" }))
+        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.body, .query, .formData])): return \($0.moyaTask)" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")

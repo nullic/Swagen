@@ -9,13 +9,16 @@
 import Foundation
 
 let reserverWords = ["Type", "Self", "self", "Codable"]
+let reserverChars = ["+", "-"]
 let indent = "    "
 var genAccessLevel = "public"
 
 
 extension String {
     var escaped: String {
-        return reserverWords.contains(self) ? "`\(self)`" : self
+        var result = self.filter { reserverChars.contains(String($0)) == false }
+        result = reserverWords.contains(result) ? "`\(result)`" : result
+        return result
     }
 
     var capitalizedFirstLetter: String {
@@ -42,30 +45,20 @@ let utilsFile =
 \(genFilePrefix)
 import Moya
 
-extension Dictionary where Key == String, Value == Any? {
-    func unopt() -> [String: Any] {
-        return reduce(into: [String: Any]()) { (result, kv) in
+extension Dictionary where Value == Any? {
+    func unopt() -> [Key: Any] {
+        return reduce(into: [Key: Any]()) { (result, kv) in
             if let value = kv.value {
                 result[kv.key] = value
             }
         }
     }
-}
 
-\(genAccessLevel) enum ResponseDecodeError {
-    case unknowCode
-}
-
-\(genAccessLevel) protocol TargetTypeResponse: TargetType {
-    func decodeResponse(_ response: Moya.Response) throws -> Any
-}
-
-
-extension Optional {
-    fileprivate func or(_ other: Optional) -> Optional {
-        switch self {
-        case .none: return other
-        case .some: return self
+    func unoptString() -> [Key: String] {
+        return reduce(into: [Key: String]()) { (result, kv) in
+            if let value = kv.value {
+                result[kv.key] = String(describing: value)
+            }
         }
     }
 }
@@ -115,6 +108,19 @@ extension Optional {
             try container.encode(value)
         }
     }
+}
+
+"""
+
+
+let targetTypeResponseCode =
+"""
+\(genAccessLevel) enum ResponseDecodeError {
+    case unknowCode
+}
+
+\(genAccessLevel) protocol TargetTypeResponse: TargetType {
+    func decodeResponse(_ response: Moya.Response) throws -> Any
 }
 
 """
