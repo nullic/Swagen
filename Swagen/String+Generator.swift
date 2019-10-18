@@ -9,14 +9,13 @@
 import Foundation
 
 let reserverWords = ["Type", "Self", "self", "Codable"]
-let reserverChars = ["+", "-"]
 let indent = "    "
 var genAccessLevel = "public"
 
 
 extension String {
     var escaped: String {
-        var result = self.filter { reserverChars.contains(String($0)) == false }
+        var result = self.filter { $0.isLetter || $0.isNumber }
         result = reserverWords.contains(result) ? "`\(result)`" : result
         return result
     }

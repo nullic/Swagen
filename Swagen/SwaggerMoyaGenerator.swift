@@ -44,7 +44,7 @@ class SwaggerMoyaGenerator {
             try FileManager.default.createDirectory(at: modelsFolder, withIntermediateDirectories: true, attributes: nil)
 
             for (_, scheme) in processor.schemes {
-                let fileURL = modelsFolder.appendingPathComponent("\(scheme.title).swift")
+                let fileURL = modelsFolder.appendingPathComponent("\(scheme.title.escaped).swift")
                 let text = "\(genFilePrefix)\n\n\(scheme.swiftString)\n"
                 try text.data(using: .utf8)?.write(to: fileURL)
             }

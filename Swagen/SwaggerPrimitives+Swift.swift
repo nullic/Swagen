@@ -41,7 +41,7 @@ extension PrimitiveObject {
         case .integer: return format?.swiftString ?? type.swiftString
         case .string: return type.swiftString
         case .boolean: return type.swiftString
-        case .object: return (schema != nil ? processor.schemes[schema!]?.title : nil) ?? type.swiftString
+        case .object: return (schema != nil ? processor.schemes[schema!]?.title.escaped : nil) ?? type.swiftString
         case .array: return "[\(items!.typeSwiftString)]"
         case .number: return format?.swiftString ?? type.swiftString
         case .file: return type.swiftString
