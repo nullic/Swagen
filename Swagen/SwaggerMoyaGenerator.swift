@@ -86,7 +86,8 @@ class SwaggerMoyaGenerator {
     private func apiDefenition(name: String, operations: [Operation]) -> String {
         var strings: [String] = []
         
-        let caseReturn = "\n\(indent)\(indent)\(indent)return"
+//        let caseReturn = "\n\(indent)\(indent)\(indent)return"
+        let caseReturn = " return"
         
         // Defenition
         strings.append("\(genAccessLevel) enum \(name) {")
