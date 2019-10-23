@@ -24,7 +24,7 @@ extension PropertyObject {
         let dataString: String
         switch type {
         case .file:
-            dataString = "MultipartFormData(provider: .file(\(nameSwiftString)), name: \"\(nameSwiftString)\")"
+            dataString = "MultipartFormData(provider: \(nameSwiftString), name: \"\(nameSwiftString)\")"
         default:
             dataString = "MultipartFormData(provider: .data(String(describing: \(nameSwiftString)).data(using: .utf8)!), name: \"\(nameSwiftString)\")"
         }

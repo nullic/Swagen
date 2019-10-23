@@ -86,6 +86,8 @@ class SwaggerMoyaGenerator {
     private func apiDefenition(name: String, operations: [Operation]) -> String {
         var strings: [String] = []
         
+        let caseReturn = "\n\(indent)\(indent)\(indent)return"
+        
         // Defenition
         strings.append("\(genAccessLevel) enum \(name) {")
         strings.append(contentsOf: operations.map({ "\($0.caseDocumetation)\n\(indent)case \($0.caseDeclaration)\n" }))
@@ -106,7 +108,7 @@ class SwaggerMoyaGenerator {
         // RequestsneedParams
         strings.append("\(indent)\(genAccessLevel) var headers: [String: String]? {")
         strings.append("\(indent)\(indent)switch self {")
-        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.header])): return \($0.moyaTaskHeaders)" }))
+        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.header])):\(caseReturn) \($0.moyaTaskHeaders)" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")
@@ -120,7 +122,7 @@ class SwaggerMoyaGenerator {
         
         strings.append("\(indent)\(genAccessLevel) var task: Moya.Task {")
         strings.append("\(indent)\(indent)switch self {")
-        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.body, .query, .formData])): return \($0.moyaTask)" }))
+        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.body, .query, .formData])):\(caseReturn) \($0.moyaTask)" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")

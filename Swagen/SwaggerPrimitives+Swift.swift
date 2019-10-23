@@ -18,7 +18,7 @@ extension ParameterType {
         case .object: return "AnyObjectValue"
         case .array: return "[AnyObjectValue]"
         case .number: return "Double"
-        case .file: return "URL"
+        case .file: return "Moya.MultipartFormData.FormDataProvider"
         }
     }
 }
