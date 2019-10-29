@@ -24,7 +24,7 @@ extension PropertyObject {
         let dataString: String
         switch type {
         case .file:
-            dataString = "\(nameSwiftString)"
+            dataString = "\(nameSwiftString).moyaFormData(name: \"\(nameSwiftString)\")"
         default:
             dataString = "MultipartFormData(provider: .data(String(describing: \(nameSwiftString)).data(using: .utf8)!), name: \"\(nameSwiftString)\")"
         }
@@ -93,7 +93,7 @@ extension Operation {
 
     var moyaTaskHeaders: String {
         let header = parameters.filter { $0.in == .header }
-        var headerStrings = header.map({ "(\"\($0.nameSwiftString)\", \($0.nameSwiftString))" })
+        var headerStrings = header.map({ "(\"\($0.name)\", \($0.nameSwiftString))" })
         if let type = consumes.first {
             headerStrings.append("(\"Content-Type\", \"\(type)\")")
         }

@@ -109,6 +109,20 @@ extension Dictionary where Value == Any? {
     }
 }
 
+\(genAccessLevel) enum FileValue {
+    case data(value: Foundation.Data, fileName: String, mimeType: String)
+    case url(value: Foundation.URL)
+
+    func moyaFormData(name: String) -> MultipartFormData {
+        switch self {
+        case .data(let value, let fileName, let mimeType):
+            return MultipartFormData(provider: .data(value), name: name, fileName: fileName, mimeType: mimeType)
+        case .url(let value):
+            return MultipartFormData(provider: .file(value), name: name)
+        }
+    }
+}
+
 """
 
 
