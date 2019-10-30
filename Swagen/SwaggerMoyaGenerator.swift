@@ -91,7 +91,7 @@ class SwaggerMoyaGenerator {
         
         // Defenition
         strings.append("\(genAccessLevel) enum \(name) {")
-        strings.append(contentsOf: operations.map({ "\($0.caseDocumetation)\n\(indent)case \($0.caseDeclaration)\n" }))
+        strings.append(operations.map({ "\($0.caseDocumetation)\n\(indent)case \($0.caseDeclaration)" }).joined(separator: "\n\n"))
         strings.append("}")
         strings.append("")
         
