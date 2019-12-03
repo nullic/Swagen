@@ -55,7 +55,7 @@ extension PropertyObject {
 
         var strings: [String] = []
         strings.append("\(indent)\(genAccessLevel) enum \(nameSwiftString.capitalizedFirstLetter.escaped): String, CaseIterable, Codable {")
-        strings.append(contentsOf: values.sorted().map({ "\(indent)\(indent)case \($0.lowercased()) = \"\($0)\"" }))
+        strings.append(contentsOf: values.sorted().map({ "\(indent)\(indent)case \($0.lowercased().escaped) = \"\($0)\"" }))
         strings.append("\(indent)}\n")
         return strings.joined(separator: "\n")
     }
