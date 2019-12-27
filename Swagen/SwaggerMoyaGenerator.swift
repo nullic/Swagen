@@ -15,6 +15,7 @@ class SwaggerMoyaGenerator {
         static let internalLevel = Options(rawValue: 1 << 0)
         static let responseTypes = Options(rawValue: 1 << 1)
         static let customAuthorization = Options(rawValue: 1 << 2)
+        static let moyaProvider = Options(rawValue: 1 << 3)
     }
 
     let processor: SwaggerProcessor
@@ -60,6 +61,12 @@ class SwaggerMoyaGenerator {
 
             let utilsURL = outputFolder.appendingPathComponent("Utils.swift")
             try? FileManager.default.removeItem(at: utilsURL)
+
+            if options.contains(.moyaProvider) {
+                let fileURL = outputFolder.appendingPathComponent("Server.swift")
+                try? FileManager.default.removeItem(at: fileURL)
+                try serverFile.data(using: .utf8)?.write(to: fileURL)
+            }
 
             var utilsStings = utilsFile
             if options.contains(.responseTypes) {

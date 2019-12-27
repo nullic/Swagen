@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-ar https://api-im-public-stage1.synesis-sport.com/v2/api-docs ./output"
+            argument = "-ars https://api-im-public-stage1.synesis-sport.com/v2/api-docs ./output"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
