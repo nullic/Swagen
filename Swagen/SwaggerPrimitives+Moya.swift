@@ -104,14 +104,29 @@ extension Operation {
         return (hasAuthorization ? AuthorizationType.custom : AuthorizationType.none).moyaString
     }
 
-    var moyaResponseMap: String {
-        let types = responses.reduce(into: [String: String]()) { (result, kv) in
-            if kv.value.primitive.type != .none {
-                result[kv.key] = kv.value.primitive.typeSwiftString
-            }
+    func moyaResponseDecoder(responseName: String, indentLevel: Int = 2) -> String {
+        let primitives = responses.reduce(into: [String: PrimitiveObject]()) { (result, kv) in
+            result[kv.key] = kv.value.primitive
         }
 
-        let keys = types.keys.sorted()
-        return types.isEmpty ? "[:]" : "[\(keys.map({ "\($0): \(types[$0]!).self" }).joined(separator: ", "))]"
+        let keys = primitives.keys.sorted()
+
+        var baseIndent = ""
+        for _ in 0..<indentLevel { baseIndent += indent }
+
+        var strings: [String] = []
+        strings.append("\(baseIndent)switch \(responseName).statusCode {")
+        for key in keys {
+            let primitive = primitives[key]!
+            if primitive.type == .none {
+                strings.append("\(baseIndent)case \(key): return Void()")
+            } else {
+                strings.append("\(baseIndent)case \(key): return try JSONDecoder().decodeSafe(\(primitive.typeSwiftString).self, from: \(responseName).data)")
+            }
+        }
+        strings.append("\(baseIndent)default: throw ResponseDecodeError.unknowCode")
+        strings.append("\(baseIndent)}")
+
+        return strings.joined(separator: "\n")
     }
 }

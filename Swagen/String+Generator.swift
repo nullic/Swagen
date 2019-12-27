@@ -62,6 +62,21 @@ extension Dictionary where Value == Any? {
     }
 }
 
+extension JSONDecoder {
+    func decodeSafe<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable {
+        do {
+            return try self.decode(type, from: data)
+        } catch DecodingError.dataCorrupted(let context) {
+            let value = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
+            if let result = value as? T {
+                return result
+            } else {
+                throw DecodingError.dataCorrupted(context)
+            }
+        }
+    }
+}
+
 \(genAccessLevel) enum AnyObjectValue: Codable {
     case string(String)
     case int(Int)
@@ -128,7 +143,8 @@ extension Dictionary where Value == Any? {
 
 let targetTypeResponseCode =
 """
-\(genAccessLevel) enum ResponseDecodeError {
+
+\(genAccessLevel) enum ResponseDecodeError: Error {
     case unknowCode
 }
 
@@ -145,21 +161,6 @@ import Foundation
 import Moya
 
 fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
-
-fileprivate extension JSONDecoder {
-    func decodeSafe<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable {
-        do {
-            return try self.decode(type, from: data)
-        } catch DecodingError.dataCorrupted(let context) {
-            let value = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
-            if let result = value as? T {
-                return result
-            } else {
-                throw DecodingError.dataCorrupted(context)
-            }
-        }
-    }
-}
 
 \(genAccessLevel) enum ServerError: Error {
     case invalidResponseCode(_: Int)

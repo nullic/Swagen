@@ -154,9 +154,9 @@ class SwaggerMoyaGenerator {
         if options.contains(.responseTypes) {
             strings.append("")
             strings.append("extension \(name): TargetTypeResponse {")
-            strings.append("\(indent)\(genAccessLevel) func decodeResponse(_ response: Moya.Response) throws -> Any")
+            strings.append("\(indent)\(genAccessLevel) func decodeResponse(_ response: Moya.Response) throws -> Any {")
             strings.append("\(indent)\(indent)switch self {")
-            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaResponseMap)" }))
+            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName):\n\($0.moyaResponseDecoder(responseName: "response", indentLevel: 3))" }))
             strings.append("\(indent)\(indent)}")
             strings.append("\(indent)}")
             strings.append("}")
