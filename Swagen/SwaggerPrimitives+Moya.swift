@@ -62,6 +62,14 @@ extension Operation {
     var caseDeclaration: String {
         return parameters.isEmpty ? caseName : "\(caseName)(\(sortedParameters.map({ $0.nameTypeSwiftString }).joined(separator: ", ")))"
     }
+
+    var funcDeclaration: String {
+        return "\(caseName)(\(sortedParameters.map({ $0.nameTypeSwiftString }).joined(separator: ", ")))"
+    }
+
+    var caseUsage: String {
+        return parameters.isEmpty ? caseName : "\(caseName)(\(sortedParameters.map({ "\($0.nameSwiftString): \($0.nameSwiftString)" }).joined(separator: ", ")))"
+    }
     
     func caseWithParams(position: [ParameterPosition]) -> String {
         let needParams = parameters.contains(where: { position.contains($0.in) })
@@ -102,6 +110,14 @@ extension Operation {
 
     var moyaTaskAuth: String {
         return (hasAuthorization ? AuthorizationType.custom : AuthorizationType.none).moyaString
+    }
+
+    var firstSuccessResponseType: String {
+        if let key = responses.keys.sorted().first, let primitive = responses[key]?.primitive {
+            return primitive.typeSwiftString
+        } else {
+            return "Void"
+        }
     }
 
     func moyaResponseDecoder(responseName: String, indentLevel: Int = 2) -> String {

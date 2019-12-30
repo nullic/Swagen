@@ -20,7 +20,7 @@ if CommandLine.arguments.count < 3 {
     print("\ti: access level - 'internal'")
     print("\ta: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")
     print("\tr: add 'Response' decoding")
-    print("\ts: add 'Server' generic (Moya Provider subclass)")
+    print("\tp: add 'Server<Target: TargetType>: MoyaProvider<Target>' implementation")
 
 } else if CommandLine.arguments.count <= 4 {
     let input, output, options: String
@@ -38,7 +38,7 @@ if CommandLine.arguments.count < 3 {
     if options.contains("i") { generatorOpts.insert(.internalLevel) }
     if options.contains("a") { generatorOpts.insert(.customAuthorization) }
     if options.contains("r") { generatorOpts.insert(.responseTypes) }
-    if options.contains("s") { generatorOpts.insert(.moyaProvider) }
+    if options.contains("p") { generatorOpts.insert(.moyaProvider) }
 
     let inputURL: URL
     let outputURL: URL

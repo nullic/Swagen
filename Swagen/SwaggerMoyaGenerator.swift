@@ -162,6 +162,22 @@ class SwaggerMoyaGenerator {
             strings.append("}")
         }
 
+        // Responses
+        if options.contains(.moyaProvider) {
+            strings.append("")
+            strings.append("extension Server where Target == \(name) {")
+            let ops: [String] = operations.map { op -> String in
+                var subs: [String] = []
+                subs.append("\(indent)\(genAccessLevel) func \(op.funcDeclaration) throws -> \(op.firstSuccessResponseType) {")
+                subs.append("\(indent)\(indent)return try response(.\(op.caseUsage))")
+                subs.append("\(indent)}")
+                return subs.joined(separator: "\n")
+            }
+            strings.append(ops.joined(separator: "\n\n"))
+            strings.append("}")
+        }
+
+
         return strings.joined(separator: "\n")
     }
 }

@@ -157,13 +157,13 @@ let targetTypeResponseCode =
 
 let serverFile =
 """
-import Foundation
+\(genFilePrefix)
 import Moya
 
 fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
 
 \(genAccessLevel) enum ServerError: Error {
-    case invalidResponseCode(_: Int)
+    case invalidResponseCode(_: Int, _: Data)
     case connection(_: Error)
     case decoding(_: Error)
     case unknown(_: Error)
@@ -211,7 +211,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
             let result = Result<Void, Error> {
                 let response = try responseResult.get()
                 guard response.statusCode >= 200, response.statusCode < 300 else {
-                    throw ServerError.invalidResponseCode(response.statusCode)
+                    throw ServerError.invalidResponseCode(response.statusCode, response.data)
                 }
                 return Void()
             }
@@ -239,7 +239,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
             let result = Result<DataType, Error> {
                 let response = try responseResult.get()
                 guard response.statusCode >= 200, response.statusCode < 300 else {
-                    throw ServerError.invalidResponseCode(response.statusCode)
+                    throw ServerError.invalidResponseCode(response.statusCode, response.data)
                 }
                 do {
                     return try JSONDecoder().decodeSafe(DataType.self, from: response.data)
