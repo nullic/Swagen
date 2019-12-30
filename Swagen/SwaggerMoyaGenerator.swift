@@ -141,6 +141,8 @@ class SwaggerMoyaGenerator {
         // Authorization
         if options.contains(.customAuthorization) {
             strings.append("")
+            strings.append("// MARK: - Authorization")
+            strings.append("")
             strings.append("extension \(name): AccessTokenAuthorizable {")
             strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
             strings.append("\(indent)\(indent)switch self {")
@@ -152,6 +154,8 @@ class SwaggerMoyaGenerator {
 
         // Responses
         if options.contains(.responseTypes) {
+            strings.append("")
+            strings.append("// MARK: - Response Parsing")
             strings.append("")
             strings.append("extension \(name): TargetTypeResponse {")
             strings.append("\(indent)\(genAccessLevel) func decodeResponse(_ response: Moya.Response) throws -> Any {")
@@ -165,11 +169,37 @@ class SwaggerMoyaGenerator {
         // Responses
         if options.contains(.moyaProvider) {
             strings.append("")
+            strings.append("// MARK: - Sync Requests")
+            strings.append("")
             strings.append("extension Server where Target == \(name) {")
             let ops: [String] = operations.map { op -> String in
                 var subs: [String] = []
                 subs.append("\(indent)\(genAccessLevel) func \(op.funcDeclaration) throws -> \(op.firstSuccessResponseType) {")
-                subs.append("\(indent)\(indent)return try response(.\(op.caseUsage))")
+                subs.append("\(indent)\(indent)return try self.response(.\(op.caseUsage))")
+                subs.append("\(indent)}")
+                return subs.joined(separator: "\n")
+            }
+            strings.append(ops.joined(separator: "\n\n"))
+            strings.append("}")
+        }
+
+        // Responses
+        if options.contains(.moyaProvider) {
+            strings.append("")
+            strings.append("// MARK: - Async Requests")
+            strings.append("")
+            strings.append("extension Server where Target == \(name) {")
+            let ops: [String] = operations.map { op -> String in
+                let declaration: String
+                if op.parameters.isEmpty {
+                    declaration = String(op.funcDeclaration.dropLast()) + "completion: @escaping (Result<\(op.firstSuccessResponseType), ServerError>) -> Void)"
+                } else {
+                    declaration = String(op.funcDeclaration.dropLast()) + ", completion: @escaping (Result<\(op.firstSuccessResponseType), ServerError>) -> Void)"
+                }
+                var subs: [String] = []
+                subs.append("\(indent)@discardableResult")
+                subs.append("\(indent)\(genAccessLevel) func \(declaration) -> Moya.Cancellable {")
+                subs.append("\(indent)\(indent)return self.request(.\(op.caseUsage), completion: completion)")
                 subs.append("\(indent)}")
                 return subs.joined(separator: "\n")
             }
