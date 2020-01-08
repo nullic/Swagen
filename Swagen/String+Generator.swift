@@ -11,7 +11,7 @@ import Foundation
 let reserverWords = ["Type", "Self", "self", "Codable", "default"]
 let indent = "    "
 var genAccessLevel = "public"
-
+var genServerAccessLevel = "open"
 
 extension String {
     var escaped: String {
@@ -171,10 +171,10 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     case unknown(_: Error)
 }
 
-\(genAccessLevel == "public" ? "open" : genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
+\(genServerAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
 
-    \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil) {
+    \(genServerAccessLevel) init(baseURL: URL, accessToken: String? = nil) {
         self.baseURL = baseURL
         var plugins: [PluginType] = []
 
@@ -207,7 +207,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     // MARK: - Async requests
 
     @discardableResult
-    \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
+    \(genServerAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
 
         return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
             let result = Result<Void, Error> {
@@ -235,7 +235,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     }
 
     @discardableResult
-    \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
+    \(genServerAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
 
         return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
             let result = Result<DataType, Error> {
@@ -268,7 +268,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
 
     // MARK: - Sync requests
 
-    \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
+    \(genServerAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
         assert(Thread.isMainThread == false)
 
         var result: Result<Void, ServerError>!
@@ -281,7 +281,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
         return try result.get()
     }
 
-    \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
+    \(genServerAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
         assert(Thread.isMainThread == false)
 
         var result: Result<DataType, ServerError>!
