@@ -15,7 +15,7 @@ let appName = launchURL.lastPathComponent
 if CommandLine.arguments.count < 3 {
     print("Usage example:")
     print("\t\(appName) ./swagger.json ./swag/gen/folder")
-    print("\ts\(appName) -ic \"https://api-im-public-stage1.synesis-sport.com/v2/api-docs\" ./output")
+    print("\t\(appName) -ip \"https://api-im-public-stage1.synesis-sport.com/v2/api-docs\" ./output")
     print("\nOptions:")
     print("\ti: access level - 'internal'")
     print("\ta: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")

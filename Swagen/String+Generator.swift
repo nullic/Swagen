@@ -33,6 +33,8 @@ extension String {
 
 let genFilePrefix =
 """
+// swiftformat:disable all
+// swiftlint:disable all
 // Generated file
 
 import Foundation
