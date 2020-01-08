@@ -26,7 +26,6 @@ class SwaggerMoyaGenerator {
 
     init(outputFolder: URL, processor: SwaggerProcessor, options: Options) {
         genAccessLevel = options.contains(.internalLevel) ? "internal" : "public"
-        genServerAccessLevel = options.contains(.internalLevel) ? "internal" : "open"
 
         self.options = options
         self.outputFolder = outputFolder
