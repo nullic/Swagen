@@ -171,7 +171,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     case unknown(_: Error)
 }
 
-\(genAccessLevel == "public" ? "open" : genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
+final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
 
     \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil) {
