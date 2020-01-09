@@ -173,9 +173,11 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
 
 final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
+    let responseErrorMapper: (ServerError) -> Error
 
-    \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil) {
+    \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
+        self.responseErrorMapper = responseErrorMapper
         var plugins: [PluginType] = []
 
         if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil {
@@ -278,7 +280,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
             semaphore.signal()
         }
         semaphore.wait()
-        return try result.get()
+        return try result.mapError(responseErrorMapper).get()
     }
 
     \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
@@ -291,7 +293,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
             semaphore.signal()
         }
         semaphore.wait()
-        return try result.get()
+        return try result.mapError(responseErrorMapper).get()
     }
 }
 
