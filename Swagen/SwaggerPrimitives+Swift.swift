@@ -75,22 +75,28 @@ extension PropertyObject {
         return "\(nameSwiftString): \(propertyTypeSwiftString)\(required ? "" : "?")"
     }
 
-    var swiftString: String {
-        return "\(indent)\(genAccessLevel) let \(nameTypeSwiftString)"
+    func swiftString(useVar: Bool) -> String {
+        return "\(indent)\(genAccessLevel) \(useVar ? "var" : "let") \(nameTypeSwiftString)"
     }
 }
 
 extension ObjectScheme {
-    var swiftString: String {
+    func swiftString(optinalInit: Bool, useVar: Bool) -> String {
         let sorted = properties.sorted {  $0.name < $1.name }
 
         var strings: [String] = []
         strings.append("\(genAccessLevel) struct \(title.escaped): Codable {")
         strings.append(contentsOf: sorted.compactMap({ $0.swiftEnum }))
-        strings.append(contentsOf: sorted.map({ $0.swiftString }))
+        strings.append(contentsOf: sorted.map({ $0.swiftString(useVar: useVar) }))
         strings.append("")
 
-        let params = sorted.map({ $0.nameTypeSwiftString }).joined(separator: ", ")
+        let params = sorted.map({
+            if optinalInit && !$0.required {
+                return $0.nameTypeSwiftString + " = nil"
+            } else {
+                return $0.nameTypeSwiftString
+            }
+        }).joined(separator: ", ")
         strings.append("\(indent)\(genAccessLevel) init(\(params)) {")
         strings.append(contentsOf: sorted.map({ "\(indent)\(indent)self.\($0.nameSwiftString) = \($0.nameSwiftString)" }))
         strings.append("\(indent)}")

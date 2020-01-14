@@ -16,6 +16,8 @@ class SwaggerMoyaGenerator {
         static let responseTypes = Options(rawValue: 1 << 1)
         static let customAuthorization = Options(rawValue: 1 << 2)
         static let moyaProvider = Options(rawValue: 1 << 3)
+        static let optinalInit = Options(rawValue: 1 << 4)
+        static let varStruct = Options(rawValue: 1 << 5)
     }
 
     let processor: SwaggerProcessor
@@ -44,9 +46,12 @@ class SwaggerMoyaGenerator {
             try? FileManager.default.removeItem(at: modelsFolder)
             try FileManager.default.createDirectory(at: modelsFolder, withIntermediateDirectories: true, attributes: nil)
 
+            let optinalInit = options.contains(.optinalInit)
+            let useVar = options.contains(.varStruct)
+
             for (_, scheme) in processor.schemes {
                 let fileURL = modelsFolder.appendingPathComponent("\(scheme.title.escaped).swift")
-                let text = "\(genFilePrefix)\n\n\(scheme.swiftString)\n"
+                let text = "\(genFilePrefix)\n\n\(scheme.swiftString(optinalInit: optinalInit, useVar: useVar))\n"
                 try text.data(using: .utf8)?.write(to: fileURL)
             }
         } catch {

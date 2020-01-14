@@ -21,6 +21,8 @@ if CommandLine.arguments.count < 3 {
     print("\ta: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")
     print("\tr: add 'Response' decoding")
     print("\tp: add 'Server<Target: TargetType>: MoyaProvider<Target>' implementation")
+    print("\to: add default 'nil' value for generated struct init()")
+    print("\tv: use 'var' instead of 'let' for generated struct")
 
 } else if CommandLine.arguments.count <= 4 {
     let input, output, options: String
@@ -39,6 +41,8 @@ if CommandLine.arguments.count < 3 {
     if options.contains("a") { generatorOpts.insert(.customAuthorization) }
     if options.contains("r") { generatorOpts.insert(.responseTypes) }
     if options.contains("p") { generatorOpts.insert(.moyaProvider) }
+    if options.contains("o") { generatorOpts.insert(.optinalInit) }
+    if options.contains("v") { generatorOpts.insert(.varStruct) }
 
     let inputURL: URL
     let outputURL: URL
