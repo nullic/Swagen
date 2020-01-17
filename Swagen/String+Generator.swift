@@ -8,7 +8,7 @@
 
 import Foundation
 
-let reserverWords = ["Type", "Self", "self", "Codable", "default"]
+let reserverWords = ["Type", "Self", "self", "Codable", "default", "public", "private", "internal", "func", "let", "var", "enum"]
 let indent = "    "
 var genAccessLevel = "public"
 
