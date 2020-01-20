@@ -157,7 +157,7 @@ let targetTypeResponseCode =
 """
 
 
-let serverFile =
+let server13File =
 """
 \(genFilePrefix)
 import Moya
@@ -186,6 +186,148 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
 
         if let accessToken = accessToken {
             plugins.append(AccessTokenPlugin(tokenClosure: { accessToken }))
+        }
+
+        super.init(endpointClosure: { target -> Endpoint in
+            let url: URL
+            if target.path.hasPrefix("/") {
+                url = baseURL.appendingPathComponent(String(target.path.dropFirst()))
+            } else {
+                url = baseURL.appendingPathComponent(target.path)
+            }
+
+            return Endpoint(
+                url: url.absoluteString,
+                sampleResponseClosure: { .networkResponse(200, target.sampleData) },
+                method: target.method,
+                task: target.task,
+                httpHeaderFields: target.headers
+            )
+        }, callbackQueue: callbackQueue, plugins: plugins)
+    }
+
+    // MARK: - Async requests
+
+    @discardableResult
+    \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
+
+        return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
+            let result = Result<Void, Error> {
+                let response = try responseResult.get()
+                guard response.statusCode >= 200, response.statusCode < 300 else {
+                    throw ServerError.invalidResponseCode(response.statusCode, response.data)
+                }
+                return Void()
+            }
+
+            completion(result.mapError { (error: Error) -> ServerError in
+                if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
+                    if (underlying as NSError).domain == NSURLErrorDomain {
+                        return ServerError.connection(underlying)
+                    } else {
+                        return ServerError.unknown(underlying)
+                    }
+                } else if let error = error as? ServerError {
+                    return error
+                } else {
+                    return ServerError.unknown(error)
+                }
+            })
+        }
+    }
+
+    @discardableResult
+    \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
+
+        return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
+            let result = Result<DataType, Error> {
+                let response = try responseResult.get()
+                guard response.statusCode >= 200, response.statusCode < 300 else {
+                    throw ServerError.invalidResponseCode(response.statusCode, response.data)
+                }
+                do {
+                    return try JSONDecoder().decodeSafe(DataType.self, from: response.data)
+                } catch {
+                    throw ServerError.decoding(error)
+                }
+            }
+
+            completion(result.mapError { (error: Error) -> ServerError in
+                if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
+                    if (underlying as NSError).domain == NSURLErrorDomain {
+                        return ServerError.connection(underlying)
+                    } else {
+                        return ServerError.unknown(underlying)
+                    }
+                } else if let error = error as? ServerError {
+                    return error
+                } else {
+                    return ServerError.unknown(error)
+                }
+            })
+        }
+    }
+
+    // MARK: - Sync requests
+
+    \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
+        assert(Thread.isMainThread == false)
+
+        var result: Result<Void, ServerError>!
+        let semaphore = DispatchSemaphore(value: 0)
+        self.request(target, callbackQueue: callbackQueue, progress: progress) { (response: Result<Void, ServerError>) in
+            result = response
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return try result.mapError(responseErrorMapper).get()
+    }
+
+    \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
+        assert(Thread.isMainThread == false)
+
+        var result: Result<DataType, ServerError>!
+        let semaphore = DispatchSemaphore(value: 0)
+        self.request(target, callbackQueue: callbackQueue, progress: progress) { (response: Result<DataType, ServerError>) in
+            result = response
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return try result.mapError(responseErrorMapper).get()
+    }
+}
+
+"""
+
+let server14File =
+"""
+\(genFilePrefix)
+import Moya
+
+fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
+
+\(genAccessLevel) enum ServerError: Error {
+    case invalidResponseCode(_: Int, _: Data)
+    case connection(_: Error)
+    case decoding(_: Error)
+    case unknown(_: Error)
+}
+
+final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
+    let baseURL: URL
+    let responseErrorMapper: (ServerError) -> Error
+
+    \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+        self.baseURL = baseURL
+        self.responseErrorMapper = responseErrorMapper
+        var plugins: [PluginType] = []
+
+        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil {
+            plugins.append(NetworkLoggerPlugin(configuration: .init(logOptions: .verbose)))
+        }
+
+        if let accessToken = accessToken {
+            plugins.append(AccessTokenPlugin(tokenClosure: { _ in accessToken }))
         }
 
         super.init(endpointClosure: { target -> Endpoint in

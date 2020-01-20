@@ -77,7 +77,13 @@ class SwaggerMoyaGenerator {
             if options.contains(.moyaProvider) {
                 let fileURL = outputFolder.appendingPathComponent("Server.swift")
                 try? FileManager.default.removeItem(at: fileURL)
-                try serverFile.data(using: .utf8)?.write(to: fileURL)
+                switch version {
+                case .v13:
+                    try server13File.data(using: .utf8)?.write(to: fileURL)
+                case .v14:
+                    try server14File.data(using: .utf8)?.write(to: fileURL)
+                }
+
             }
 
             var utilsStings = utilsFile
