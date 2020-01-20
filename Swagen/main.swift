@@ -14,8 +14,8 @@ let appName = launchURL.lastPathComponent
 
 if CommandLine.arguments.count < 3 {
     print("Usage example:")
-    print("\t\(appName) ./swagger.json ./swag/gen/folder")
-    print("\t\(appName) -ip \"https://api-im-public-stage1.synesis-sport.com/v2/api-docs\" ./output")
+    print("\t\(appName) ./swagger.json ./swag/gen/folder {optional generator kind}")
+    print("\t\(appName) -ip \"https://api-im-public-stage1.synesis-sport.com/v2/api-docs\" ./output moya14")
     print("\nOptions:")
     print("\ti: access level - 'internal'")
     print("\ta: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")
@@ -23,26 +23,34 @@ if CommandLine.arguments.count < 3 {
     print("\tp: add 'Server<Target: TargetType>: MoyaProvider<Target>' implementation")
     print("\to: add default 'nil' value for generated struct init()")
     print("\tv: use 'var' instead of 'let' for generated struct")
+    print("\nGenerator Kind:")
+    print("\tmoya13: generate Moya up to version 13.x.x - default value")
+    print("\tmoya14: generate Moya from version 14.0.0")
 
-} else if CommandLine.arguments.count <= 4 {
-    let input, output, options: String
-    if CommandLine.arguments.count == 3 {
-        options = ""
-        input = CommandLine.arguments[1]
-        output = CommandLine.arguments[2]
-    } else {
-        options = CommandLine.arguments[1]
-        input = CommandLine.arguments[2]
-        output = CommandLine.arguments[3]
-    }
-
+} else {
+    var input, output: String!
     var generatorOpts: SwaggerMoyaGenerator.Options = []
-    if options.contains("i") { generatorOpts.insert(.internalLevel) }
-    if options.contains("a") { generatorOpts.insert(.customAuthorization) }
-    if options.contains("r") { generatorOpts.insert(.responseTypes) }
-    if options.contains("p") { generatorOpts.insert(.moyaProvider) }
-    if options.contains("o") { generatorOpts.insert(.optinalInit) }
-    if options.contains("v") { generatorOpts.insert(.varStruct) }
+    var generatorVersion: SwaggerMoyaGenerator.Version = .v13
+
+    for (index, arg) in CommandLine.arguments.enumerated() {
+        if index == 0 { continue }
+        if arg.hasPrefix("-") {
+            if arg.contains("i") { generatorOpts.insert(.internalLevel) }
+            if arg.contains("a") { generatorOpts.insert(.customAuthorization) }
+            if arg.contains("r") { generatorOpts.insert(.responseTypes) }
+            if arg.contains("p") { generatorOpts.insert(.moyaProvider) }
+            if arg.contains("o") { generatorOpts.insert(.optinalInit) }
+            if arg.contains("v") { generatorOpts.insert(.varStruct) }
+        } else if input == nil {
+            input = arg
+        } else if output == nil {
+            output = arg
+        } else {
+            if arg.lowercased() == "moya13" { generatorVersion = .v13 }
+            if arg.lowercased() == "moya14" { generatorVersion = .v14 }
+            break
+        }
+    }
 
     let inputURL: URL
     let outputURL: URL
@@ -64,7 +72,7 @@ if CommandLine.arguments.count < 3 {
     let processor = SwaggerProcessor(jsonURL: inputURL)
     processor.run()
 
-    let generator = SwaggerMoyaGenerator(outputFolder: outputURL, processor: processor, options: generatorOpts)
+    let generator = SwaggerMoyaGenerator(outputFolder: outputURL, processor: processor, options: generatorOpts, version: generatorVersion)
     generator.run()
 
     #if DEBUG

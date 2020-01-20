@@ -20,15 +20,22 @@ class SwaggerMoyaGenerator {
         static let varStruct = Options(rawValue: 1 << 5)
     }
 
+    enum Version {
+        case v13
+        case v14
+    }
+
     let processor: SwaggerProcessor
     let options: Options
     let outputFolder: URL
     let modelsFolder: URL
     let apisFolder: URL
+    let version: Version
 
-    init(outputFolder: URL, processor: SwaggerProcessor, options: Options) {
+    init(outputFolder: URL, processor: SwaggerProcessor, options: Options, version: Version) {
         genAccessLevel = options.contains(.internalLevel) ? "internal" : "public"
 
+        self.version = version
         self.options = options
         self.outputFolder = outputFolder
         self.modelsFolder = outputFolder.appendingPathComponent("Models")
@@ -149,7 +156,14 @@ class SwaggerMoyaGenerator {
             strings.append("// MARK: - Authorization")
             strings.append("")
             strings.append("extension \(name): AccessTokenAuthorizable {")
-            strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
+
+            switch version {
+            case .v13:
+                strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
+            case .v14:
+                strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType? {")
+            }
+
             strings.append("\(indent)\(indent)switch self {")
             strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaTaskAuth)" }))
             strings.append("\(indent)\(indent)}")
