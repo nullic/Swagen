@@ -140,6 +140,26 @@ extension JSONDecoder {
     }
 }
 
+\(genAccessLevel) struct HTTPHeadersPlugin: PluginType {
+    \(genAccessLevel) typealias HTTPHeadersClosure = (URLRequest) -> [String: String]
+    \(genAccessLevel) let headersClosure: HTTPHeadersClosure
+
+    \(genAccessLevel) init(headersClosure: @escaping HTTPHeadersClosure) {
+        self.headersClosure = headersClosure
+    }
+
+    \(genAccessLevel) func prepare(_ request: URLRequest, target: HTTPHeadersClosure) -> URLRequest {
+        var request = request
+
+        let headers = headersClosure(request)
+        for (field, value) in headers {
+            request.addValue(value, forHTTPHeaderField: field)
+        }
+
+        return request
+    }
+}
+
 """
 
 
@@ -175,7 +195,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
 
-    \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    \(genAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
         self.responseErrorMapper = responseErrorMapper
         var plugins: [PluginType] = []
@@ -187,6 +207,12 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
         if let accessToken = accessToken {
             plugins.append(AccessTokenPlugin(tokenClosure: { accessToken }))
         }
+
+        if let headersClosure = addHeadersClosure {
+            plugins.append(HTTPHeadersPlugin(headersClosure: headersClosure))
+        }
+
+        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
 
         super.init(endpointClosure: { target -> Endpoint in
             let url: URL
@@ -203,7 +229,14 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
                 task: target.task,
                 httpHeaderFields: target.headers
             )
-        }, callbackQueue: callbackQueue, plugins: plugins)
+        }, callbackQueue: callbackQueue, session: session, plugins: plugins)
+    }
+
+    private static func alamofireSessionWith(protocolClasses: [AnyClass]?) -> Session {
+        let configuration = URLSessionConfiguration.default
+        configuration.protocolClasses = protocolClasses
+        configuration.headers = .default
+        return Session(configuration: configuration, startRequestsImmediately: false)
     }
 
     // MARK: - Async requests
@@ -317,7 +350,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
 
-    \(genAccessLevel) init(baseURL: URL, accessToken: String? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    \(genAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
         self.responseErrorMapper = responseErrorMapper
         var plugins: [PluginType] = []
@@ -329,6 +362,12 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
         if let accessToken = accessToken {
             plugins.append(AccessTokenPlugin(tokenClosure: { _ in accessToken }))
         }
+
+        if let headersClosure = addHeadersClosure {
+            plugins.append(HTTPHeadersPlugin(headersClosure: headersClosure))
+        }
+
+        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
 
         super.init(endpointClosure: { target -> Endpoint in
             let url: URL
@@ -345,7 +384,14 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
                 task: target.task,
                 httpHeaderFields: target.headers
             )
-        }, callbackQueue: callbackQueue, plugins: plugins)
+        }, callbackQueue: callbackQueue, session: session, plugins: plugins)
+    }
+
+    private static func alamofireSessionWith(protocolClasses: [AnyClass]?) -> Session {
+        let configuration = URLSessionConfiguration.default
+        configuration.protocolClasses = protocolClasses
+        configuration.headers = .default
+        return Session(configuration: configuration, startRequestsImmediately: false)
     }
 
     // MARK: - Async requests

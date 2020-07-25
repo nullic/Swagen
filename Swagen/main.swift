@@ -24,13 +24,14 @@ if CommandLine.arguments.count < 3 {
     print("\to: add default 'nil' value for generated struct init()")
     print("\tv: use 'var' instead of 'let' for generated struct")
     print("\nGenerator Kind:")
-    print("\tmoya13: generate Moya up to version 13.x.x - default value")
-    print("\tmoya14: generate Moya from version 14.0.0")
+    print("\tmoya13: generate Moya up to version 13.x.x")
+    print("\tmoya14: generate Moya from version 14.x.x - default value")
+    print("\nSpecific API update")
 
 } else {
     var input, output: String!
     var generatorOpts: SwaggerMoyaGenerator.Options = []
-    var generatorVersion: SwaggerMoyaGenerator.Version = .v13
+    var generatorVersion: SwaggerMoyaGenerator.Version = .v14
 
     for (index, arg) in CommandLine.arguments.enumerated() {
         if index == 0 { continue }
