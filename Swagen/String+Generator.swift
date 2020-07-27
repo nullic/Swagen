@@ -148,7 +148,7 @@ extension JSONDecoder {
         self.headersClosure = headersClosure
     }
 
-    \(genAccessLevel) func prepare(_ request: URLRequest, target: HTTPHeadersClosure) -> URLRequest {
+    \(genAccessLevel) func prepare(_ request: URLRequest, target: TargetType) -> URLRequest {
         var request = request
 
         let headers = headersClosure(request)
