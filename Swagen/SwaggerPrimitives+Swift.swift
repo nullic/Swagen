@@ -63,6 +63,12 @@ extension PropertyObject {
     var propertyTypeSwiftString: String {
         switch type {
         case .string: return self.enum != nil ? nameSwiftString.capitalizedFirstLetter.escaped : type.swiftString
+        case .object:
+            if let additionalProperties = self.additionalProperties {
+                return "[String: \(additionalProperties.typeSwiftString)]"
+            } else {
+                return super.typeSwiftString
+            }
         default: return super.typeSwiftString
         }
     }

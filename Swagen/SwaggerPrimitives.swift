@@ -156,11 +156,19 @@ class PropertyObject: PrimitiveObject {
     let name: String
     let required: Bool
     let `enum`: [String]?
+    let additionalProperties: PrimitiveObject?
 
     init(name: String, required: Bool, info: [String: Any], processor: SwaggerProcessor) {
         self.name = name
         self.required = required
         self.enum = info["enum"] as? [String]
+        
+        if let additionalProperties = info["additionalProperties"] as? [String: Any], additionalProperties.isEmpty == false {
+            self.additionalProperties = PrimitiveObject(info: additionalProperties, processor: processor)
+        } else {
+            self.additionalProperties = nil
+        }
+        
         super.init(info: info, processor: processor)
     }
 }
