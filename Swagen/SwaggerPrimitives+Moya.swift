@@ -102,7 +102,7 @@ extension Operation {
     var moyaTaskHeaders: String {
         let header = parameters.filter { $0.in == .header }
         var headerStrings = header.map({ "(\"\($0.name)\", \($0.nameSwiftString))" })
-        if let type = consumes.first {
+        if let type = consumes.first(where: { $0 != "*/*" }) {
             headerStrings.append("(\"Content-Type\", \"\(type)\")")
         }
         return headerStrings.isEmpty ? "nil" : "Dictionary<String, Any?>(dictionaryLiteral: \(headerStrings.joined(separator: ", "))).unoptString()"
