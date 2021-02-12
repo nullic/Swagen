@@ -53,6 +53,10 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "-aropv https://api-im-public-stage1.synesis-sport.com/v2/api-docs ./output"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-ap &quot;https://api-frisbee-stage2.synesis-sport.com/v2/api-docs&quot; &quot;./output&quot; &quot;moya14&quot;"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
