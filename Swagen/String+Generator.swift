@@ -232,6 +232,39 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
         }, callbackQueue: callbackQueue, session: session, plugins: plugins)
     }
 
+    \(genAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+        self.baseURL = baseURL
+        self.responseErrorMapper = responseErrorMapper
+        var serverPlugins: [PluginType] = []
+
+        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil {
+            plugins.append(NetworkLoggerPlugin(verbose: true))
+        }
+
+        if serverPlugins.isEmpty == false {
+            serverPlugins.append(contentsOf: plugins)
+        }
+
+        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
+
+        super.init(endpointClosure: { target -> Endpoint in
+            let url: URL
+            if target.path.hasPrefix("/") {
+                url = baseURL.appendingPathComponent(String(target.path.dropFirst()))
+            } else {
+                url = baseURL.appendingPathComponent(target.path)
+            }
+
+            return Endpoint(
+                url: url.absoluteString,
+                sampleResponseClosure: { .networkResponse(200, target.sampleData) },
+                method: target.method,
+                task: target.task,
+                httpHeaderFields: target.headers
+            )
+        }, callbackQueue: callbackQueue, session: session, plugins: serverPlugins)
+    }
+
     private static func alamofireSessionWith(protocolClasses: [AnyClass]?) -> Session {
         let configuration = URLSessionConfiguration.default
         configuration.protocolClasses = protocolClasses
@@ -350,13 +383,13 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
 
-    \(genAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    \(genAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
         self.responseErrorMapper = responseErrorMapper
         var plugins: [PluginType] = []
 
-        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil {
-            plugins.append(NetworkLoggerPlugin(configuration: .init(logOptions: .verbose)))
+        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil || logLevel != nil {
+            plugins.append(NetworkLoggerPlugin(configuration: .init(logOptions: logLevel ?? .verbose)))
         }
 
         if let accessToken = accessToken {
@@ -385,6 +418,39 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
                 httpHeaderFields: target.headers
             )
         }, callbackQueue: callbackQueue, session: session, plugins: plugins)
+    }
+
+    \(genAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+        self.baseURL = baseURL
+        self.responseErrorMapper = responseErrorMapper
+        var serverPlugins: [PluginType] = []
+
+        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil || logLevel != nil {
+            serverPlugins.append(NetworkLoggerPlugin(configuration: .init(logOptions: logLevel ?? .verbose)))
+        }
+
+        if serverPlugins.isEmpty == false {
+            serverPlugins.append(contentsOf: plugins)
+        }
+
+        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
+
+        super.init(endpointClosure: { target -> Endpoint in
+            let url: URL
+            if target.path.hasPrefix("/") {
+                url = baseURL.appendingPathComponent(String(target.path.dropFirst()))
+            } else {
+                url = baseURL.appendingPathComponent(target.path)
+            }
+
+            return Endpoint(
+                url: url.absoluteString,
+                sampleResponseClosure: { .networkResponse(200, target.sampleData) },
+                method: target.method,
+                task: target.task,
+                httpHeaderFields: target.headers
+            )
+        }, callbackQueue: callbackQueue, session: session, plugins: serverPlugins)
     }
 
     private static func alamofireSessionWith(protocolClasses: [AnyClass]?) -> Session {
