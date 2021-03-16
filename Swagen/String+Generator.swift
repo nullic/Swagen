@@ -11,6 +11,7 @@ import Foundation
 let reserverWords = ["Type", "Self", "self", "Codable", "default", "public", "private", "internal", "func", "let", "var", "enum"]
 let indent = "    "
 var genAccessLevel = "public"
+var genNonClassAccessLevel = "public"
 
 
 extension String {
@@ -79,7 +80,7 @@ extension JSONDecoder {
     }
 }
 
-\(genAccessLevel) enum AnyObjectValue: Codable {
+\(genNonClassAccessLevel) enum AnyObjectValue: Codable {
     case string(String)
     case int(Int)
     case double(Double)
@@ -87,7 +88,7 @@ extension JSONDecoder {
     case object([String: AnyObjectValue])
     case array([AnyObjectValue])
 
-    \(genAccessLevel) init(from decoder: Decoder) throws {
+    \(genNonClassAccessLevel) init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
         if let value = try? container.decode(String.self) {
@@ -107,7 +108,7 @@ extension JSONDecoder {
         }
     }
 
-    \(genAccessLevel) func encode(to encoder: Encoder) throws {
+    \(genNonClassAccessLevel) func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case .string(let value):
@@ -126,7 +127,7 @@ extension JSONDecoder {
     }
 }
 
-\(genAccessLevel) enum FileValue {
+\(genNonClassAccessLevel) enum FileValue {
     case data(value: Foundation.Data, fileName: String, mimeType: String)
     case url(value: Foundation.URL)
 
@@ -140,15 +141,15 @@ extension JSONDecoder {
     }
 }
 
-\(genAccessLevel) struct HTTPHeadersPlugin: PluginType {
-    \(genAccessLevel) typealias HTTPHeadersClosure = (URLRequest) -> [String: String]
-    \(genAccessLevel) let headersClosure: HTTPHeadersClosure
+\(genNonClassAccessLevel) struct HTTPHeadersPlugin: PluginType {
+    \(genNonClassAccessLevel) typealias HTTPHeadersClosure = (URLRequest) -> [String: String]
+    \(genNonClassAccessLevel) let headersClosure: HTTPHeadersClosure
 
-    \(genAccessLevel) init(headersClosure: @escaping HTTPHeadersClosure) {
+    \(genNonClassAccessLevel) init(headersClosure: @escaping HTTPHeadersClosure) {
         self.headersClosure = headersClosure
     }
 
-    \(genAccessLevel) func prepare(_ request: URLRequest, target: TargetType) -> URLRequest {
+    \(genNonClassAccessLevel) func prepare(_ request: URLRequest, target: TargetType) -> URLRequest {
         var request = request
 
         let headers = headersClosure(request)
@@ -166,204 +167,16 @@ extension JSONDecoder {
 let targetTypeResponseCode =
 """
 
-\(genAccessLevel) enum ResponseDecodeError: Error {
+\(genNonClassAccessLevel) enum ResponseDecodeError: Error {
     case unknowCode
 }
 
-\(genAccessLevel) protocol TargetTypeResponse: TargetType {
+\(genNonClassAccessLevel) protocol TargetTypeResponse: TargetType {
     func decodeResponse(_ response: Moya.Response) throws -> Any
 }
 
 """
 
-
-let server13File =
-"""
-\(genFilePrefix)
-import Moya
-
-fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
-
-\(genAccessLevel) enum ServerError: Error {
-    case invalidResponseCode(_: Int, _: Data)
-    case connection(_: Error)
-    case decoding(_: Error)
-    case unknown(_: Error)
-}
-
-final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
-    let baseURL: URL
-    let responseErrorMapper: (ServerError) -> Error
-
-    \(genAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
-        self.baseURL = baseURL
-        self.responseErrorMapper = responseErrorMapper
-        var plugins: [PluginType] = []
-
-        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil {
-            plugins.append(NetworkLoggerPlugin(verbose: true))
-        }
-
-        if let accessToken = accessToken {
-            plugins.append(AccessTokenPlugin(tokenClosure: { accessToken }))
-        }
-
-        if let headersClosure = addHeadersClosure {
-            plugins.append(HTTPHeadersPlugin(headersClosure: headersClosure))
-        }
-
-        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
-
-        super.init(endpointClosure: { target -> Endpoint in
-            let url: URL
-            if target.path.hasPrefix("/") {
-                url = baseURL.appendingPathComponent(String(target.path.dropFirst()))
-            } else {
-                url = baseURL.appendingPathComponent(target.path)
-            }
-
-            return Endpoint(
-                url: url.absoluteString,
-                sampleResponseClosure: { .networkResponse(200, target.sampleData) },
-                method: target.method,
-                task: target.task,
-                httpHeaderFields: target.headers
-            )
-        }, callbackQueue: callbackQueue, session: session, plugins: plugins)
-    }
-
-    \(genAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
-        self.baseURL = baseURL
-        self.responseErrorMapper = responseErrorMapper
-        var serverPlugins: [PluginType] = []
-
-        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil {
-            plugins.append(NetworkLoggerPlugin(verbose: true))
-        }
-
-        if serverPlugins.isEmpty == false {
-            serverPlugins.append(contentsOf: plugins)
-        }
-
-        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
-
-        super.init(endpointClosure: { target -> Endpoint in
-            let url: URL
-            if target.path.hasPrefix("/") {
-                url = baseURL.appendingPathComponent(String(target.path.dropFirst()))
-            } else {
-                url = baseURL.appendingPathComponent(target.path)
-            }
-
-            return Endpoint(
-                url: url.absoluteString,
-                sampleResponseClosure: { .networkResponse(200, target.sampleData) },
-                method: target.method,
-                task: target.task,
-                httpHeaderFields: target.headers
-            )
-        }, callbackQueue: callbackQueue, session: session, plugins: serverPlugins)
-    }
-
-    private static func alamofireSessionWith(protocolClasses: [AnyClass]?) -> Session {
-        let configuration = URLSessionConfiguration.default
-        configuration.protocolClasses = protocolClasses
-        configuration.headers = .default
-        return Session(configuration: configuration, startRequestsImmediately: false)
-    }
-
-    // MARK: - Async requests
-
-    @discardableResult
-    \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
-
-        return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
-            let result = Result<Void, Error> {
-                let response = try responseResult.get()
-                guard response.statusCode >= 200, response.statusCode < 300 else {
-                    throw ServerError.invalidResponseCode(response.statusCode, response.data)
-                }
-                return Void()
-            }
-
-            completion(result.mapError { (error: Error) -> ServerError in
-                if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
-                    if (underlying as NSError).domain == NSURLErrorDomain {
-                        return ServerError.connection(underlying)
-                    } else {
-                        return ServerError.unknown(underlying)
-                    }
-                } else if let error = error as? ServerError {
-                    return error
-                } else {
-                    return ServerError.unknown(error)
-                }
-            })
-        }
-    }
-
-    @discardableResult
-    \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
-
-        return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
-            let result = Result<DataType, Error> {
-                let response = try responseResult.get()
-                guard response.statusCode >= 200, response.statusCode < 300 else {
-                    throw ServerError.invalidResponseCode(response.statusCode, response.data)
-                }
-                do {
-                    return try JSONDecoder().decodeSafe(DataType.self, from: response.data)
-                } catch {
-                    throw ServerError.decoding(error)
-                }
-            }
-
-            completion(result.mapError { (error: Error) -> ServerError in
-                if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
-                    if (underlying as NSError).domain == NSURLErrorDomain {
-                        return ServerError.connection(underlying)
-                    } else {
-                        return ServerError.unknown(underlying)
-                    }
-                } else if let error = error as? ServerError {
-                    return error
-                } else {
-                    return ServerError.unknown(error)
-                }
-            })
-        }
-    }
-
-    // MARK: - Sync requests
-
-    \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
-        assert(Thread.isMainThread == false)
-
-        var result: Result<Void, ServerError>!
-        let semaphore = DispatchSemaphore(value: 0)
-        self.request(target, callbackQueue: callbackQueue, progress: progress) { (response: Result<Void, ServerError>) in
-            result = response
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return try result.mapError(responseErrorMapper).get()
-    }
-
-    \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
-        assert(Thread.isMainThread == false)
-
-        var result: Result<DataType, ServerError>!
-        let semaphore = DispatchSemaphore(value: 0)
-        self.request(target, callbackQueue: callbackQueue, progress: progress) { (response: Result<DataType, ServerError>) in
-            result = response
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return try result.mapError(responseErrorMapper).get()
-    }
-}
-
-"""
 
 let server14File =
 """
@@ -372,18 +185,18 @@ import Moya
 
 fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
 
-\(genAccessLevel) enum ServerError: Error {
+\(genNonClassAccessLevel) enum ServerError: Error {
     case invalidResponseCode(_: Int, _: Data)
     case connection(_: Error)
     case decoding(_: Error)
     case unknown(_: Error)
 }
 
-final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
+\(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
 
-    \(genAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    \(genNonClassAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
         self.responseErrorMapper = responseErrorMapper
         var plugins: [PluginType] = []
@@ -420,7 +233,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
         }, callbackQueue: callbackQueue, session: session, plugins: plugins)
     }
 
-    \(genAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    \(genNonClassAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
         self.responseErrorMapper = responseErrorMapper
         var serverPlugins: [PluginType] = []
@@ -463,7 +276,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     // MARK: - Async requests
 
     @discardableResult
-    \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
+    \(genNonClassAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
 
         return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
             let result = Result<Void, Error> {
@@ -491,7 +304,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     }
 
     @discardableResult
-    \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
+    \(genNonClassAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
 
         return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
             let result = Result<DataType, Error> {
@@ -524,7 +337,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
 
     // MARK: - Sync requests
 
-    \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
+    \(genNonClassAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
         assert(Thread.isMainThread == false)
 
         var result: Result<Void, ServerError>!
@@ -537,7 +350,7 @@ final \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
         return try result.mapError(responseErrorMapper).get()
     }
 
-    \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
+    \(genNonClassAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
         assert(Thread.isMainThread == false)
 
         var result: Result<DataType, ServerError>!

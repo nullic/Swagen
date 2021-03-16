@@ -14,7 +14,7 @@ extension AuthorizationType {
         case .none: return ".none"
         case .basic: return ".basic"
         case .bearer: return ".bearer"
-        case .custom: return ".custom(\"\")"
+        case .custom(let value): return ".custom(\"\(value)\")"
         }
     }
 }
@@ -108,8 +108,8 @@ extension Operation {
         return headerStrings.isEmpty ? "nil" : "Dictionary<String, Any?>(dictionaryLiteral: \(headerStrings.joined(separator: ", "))).unoptString()"
     }
 
-    var moyaTaskAuth: String {
-        return (hasAuthorization ? AuthorizationType.custom : AuthorizationType.none).moyaString
+    func moyaTaskAuth(type: AuthorizationType) -> String {
+        return (hasAuthorization ? type : AuthorizationType.none).moyaString
     }
 
     var firstSuccessResponseType: String {

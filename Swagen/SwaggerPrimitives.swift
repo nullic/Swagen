@@ -37,7 +37,14 @@ enum AuthorizationType {
     case none
     case basic
     case bearer
-    case custom
+    case custom(value: String)
+    
+    var notNone: Bool {
+        switch self {
+        case .none: return false
+        default: return true
+        }
+    }
 }
 
 class Operation: CustomStringConvertible {

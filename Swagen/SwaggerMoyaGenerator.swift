@@ -9,34 +9,27 @@
 import Foundation
 
 class SwaggerMoyaGenerator {
-    struct Options: OptionSet {
-        let rawValue: Int
-
-        static let internalLevel = Options(rawValue: 1 << 0)
-        static let responseTypes = Options(rawValue: 1 << 1)
-        static let customAuthorization = Options(rawValue: 1 << 2)
-        static let moyaProvider = Options(rawValue: 1 << 3)
-        static let optinalInit = Options(rawValue: 1 << 4)
-        static let varStruct = Options(rawValue: 1 << 5)
-    }
-
-    enum Version {
-        case v13
-        case v14
-    }
-
     let processor: SwaggerProcessor
-    let options: Options
     let outputFolder: URL
     let modelsFolder: URL
     let apisFolder: URL
-    let version: Version
+    
+    var accessModifier: String = "public"
+    private var nonClassAccessModifier: String {
+        if accessModifier == "open" {
+           return "public"
+        } else {
+            return accessModifier
+        }
+    }
+    
+    var authorizationType: AuthorizationType = .none
+    var decodeResponse: Bool = false
+    var generateServer: Bool = false
+    var initDefault: Bool = false
+    var varStruct: Bool = false
 
-    init(outputFolder: URL, processor: SwaggerProcessor, options: Options, version: Version) {
-        genAccessLevel = options.contains(.internalLevel) ? "internal" : "public"
-
-        self.version = version
-        self.options = options
+    init(outputFolder: URL, processor: SwaggerProcessor) {
         self.outputFolder = outputFolder
         self.modelsFolder = outputFolder.appendingPathComponent("Models")
         self.apisFolder = outputFolder.appendingPathComponent("APIs")
@@ -44,6 +37,8 @@ class SwaggerMoyaGenerator {
     }
 
     func run() {
+        genAccessLevel = accessModifier
+        genNonClassAccessLevel = nonClassAccessModifier
         generateModels()
         generateAPI()
     }
@@ -53,12 +48,9 @@ class SwaggerMoyaGenerator {
             try? FileManager.default.removeItem(at: modelsFolder)
             try FileManager.default.createDirectory(at: modelsFolder, withIntermediateDirectories: true, attributes: nil)
 
-            let optinalInit = options.contains(.optinalInit)
-            let useVar = options.contains(.varStruct)
-
             for (_, scheme) in processor.schemes {
                 let fileURL = modelsFolder.appendingPathComponent("\(scheme.title.escaped).swift")
-                let text = "\(genFilePrefix)\n\n\(scheme.swiftString(optinalInit: optinalInit, useVar: useVar))\n"
+                let text = "\(genFilePrefix)\n\n\(scheme.swiftString(optinalInit: initDefault, useVar: varStruct))\n"
                 try text.data(using: .utf8)?.write(to: fileURL)
             }
         } catch {
@@ -74,20 +66,14 @@ class SwaggerMoyaGenerator {
             let utilsURL = outputFolder.appendingPathComponent("Utils.swift")
             try? FileManager.default.removeItem(at: utilsURL)
 
-            if options.contains(.moyaProvider) {
+            if generateServer {
                 let fileURL = outputFolder.appendingPathComponent("Server.swift")
                 try? FileManager.default.removeItem(at: fileURL)
-                switch version {
-                case .v13:
-                    try server13File.data(using: .utf8)?.write(to: fileURL)
-                case .v14:
-                    try server14File.data(using: .utf8)?.write(to: fileURL)
-                }
-
+                try server14File.data(using: .utf8)?.write(to: fileURL)
             }
 
             var utilsStings = utilsFile
-            if options.contains(.responseTypes) {
+            if decodeResponse {
                 utilsStings.append(contentsOf: targetTypeResponseCode)
             }
 
@@ -115,16 +101,16 @@ class SwaggerMoyaGenerator {
         let caseReturn = " return"
         
         // Defenition
-        strings.append("\(genAccessLevel) enum \(name) {")
+        strings.append("\(genNonClassAccessLevel) enum \(name) {")
         strings.append(operations.map({ "\($0.caseDocumetation)\n\(indent)case \($0.caseDeclaration)" }).joined(separator: "\n\n"))
         strings.append("}")
         strings.append("")
         
         // Paths
         strings.append("extension \(name): TargetType {")
-        strings.append("\(indent)\(genAccessLevel) var baseURL: URL { return URL(string: \"\(processor.baseURL.absoluteString)\")! }")
+        strings.append("\(indent)\(genNonClassAccessLevel) var baseURL: URL { return URL(string: \"\(processor.baseURL.absoluteString)\")! }")
         strings.append("")
-        strings.append("\(indent)\(genAccessLevel) var path: String {")
+        strings.append("\(indent)\(genNonClassAccessLevel) var path: String {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \"\($0.path)\"" }))
         strings.append("\(indent)\(indent)}")
@@ -132,58 +118,51 @@ class SwaggerMoyaGenerator {
         strings.append("")
         
         // RequestsneedParams
-        strings.append("\(indent)\(genAccessLevel) var headers: [String: String]? {")
+        strings.append("\(indent)\(genNonClassAccessLevel) var headers: [String: String]? {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.header])):\(caseReturn) \($0.moyaTaskHeaders)" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")
         
-        strings.append("\(indent)\(genAccessLevel) var method: Moya.Method {")
+        strings.append("\(indent)\(genNonClassAccessLevel) var method: Moya.Method {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return .\($0.method.lowercased())" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")
         
-        strings.append("\(indent)\(genAccessLevel) var task: Moya.Task {")
+        strings.append("\(indent)\(genNonClassAccessLevel) var task: Moya.Task {")
         strings.append("\(indent)\(indent)switch self {")
         strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.body, .query, .formData])):\(caseReturn) \($0.moyaTask)" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")
         
-        strings.append("\(indent)\(genAccessLevel) var sampleData: Data { return Data() }")
+        strings.append("\(indent)\(genNonClassAccessLevel) var sampleData: Data { return Data() }")
         strings.append("}")
 
         // Authorization
-        if options.contains(.customAuthorization) {
+        if authorizationType.notNone {
             strings.append("")
             strings.append("// MARK: - Authorization")
             strings.append("")
             strings.append("extension \(name): AccessTokenAuthorizable {")
-
-            switch version {
-            case .v13:
-                strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType {")
-            case .v14:
-                strings.append("\(indent)\(genAccessLevel) var authorizationType: Moya.AuthorizationType? {")
-            }
-
+            strings.append("\(indent)\(genNonClassAccessLevel) var authorizationType: Moya.AuthorizationType? {")
             strings.append("\(indent)\(indent)switch self {")
-            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaTaskAuth)" }))
+            strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \($0.moyaTaskAuth(type: authorizationType))" }))
             strings.append("\(indent)\(indent)}")
             strings.append("\(indent)}")
             strings.append("}")
         }
 
         // Responses
-        if options.contains(.responseTypes) {
+        if decodeResponse {
             strings.append("")
             strings.append("// MARK: - Response Parsing")
             strings.append("")
             strings.append("extension \(name): TargetTypeResponse {")
-            strings.append("\(indent)\(genAccessLevel) func decodeResponse(_ response: Moya.Response) throws -> Any {")
+            strings.append("\(indent)\(genNonClassAccessLevel) func decodeResponse(_ response: Moya.Response) throws -> Any {")
             strings.append("\(indent)\(indent)switch self {")
             strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName):\n\($0.moyaResponseDecoder(responseName: "response", indentLevel: 3))" }))
             strings.append("\(indent)\(indent)}")
@@ -192,14 +171,14 @@ class SwaggerMoyaGenerator {
         }
 
         // Responses
-        if options.contains(.moyaProvider) {
+        if generateServer {
             strings.append("")
             strings.append("// MARK: - Sync Requests")
             strings.append("")
             strings.append("extension Server where Target == \(name) {")
             let ops: [String] = operations.map { op -> String in
                 var subs: [String] = []
-                subs.append("\(indent)\(genAccessLevel) func \(op.funcDeclaration) throws -> \(op.firstSuccessResponseType) {")
+                subs.append("\(indent)\(genNonClassAccessLevel) func \(op.funcDeclaration) throws -> \(op.firstSuccessResponseType) {")
                 subs.append("\(indent)\(indent)return try self.response(.\(op.caseUsage))")
                 subs.append("\(indent)}")
                 return subs.joined(separator: "\n")
@@ -209,7 +188,7 @@ class SwaggerMoyaGenerator {
         }
 
         // Responses
-        if options.contains(.moyaProvider) {
+        if generateServer {
             strings.append("")
             strings.append("// MARK: - Async Requests")
             strings.append("")
@@ -223,7 +202,7 @@ class SwaggerMoyaGenerator {
                 }
                 var subs: [String] = []
                 subs.append("\(indent)@discardableResult")
-                subs.append("\(indent)\(genAccessLevel) func \(declaration) -> Moya.Cancellable {")
+                subs.append("\(indent)\(genNonClassAccessLevel) func \(declaration) -> Moya.Cancellable {")
                 subs.append("\(indent)\(indent)return self.request(.\(op.caseUsage), completion: completion)")
                 subs.append("\(indent)}")
                 return subs.joined(separator: "\n")

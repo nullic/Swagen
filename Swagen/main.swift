@@ -7,76 +7,77 @@
 //
 
 import Foundation
+import ArgumentParser
+
 
 let launchURL = URL(fileURLWithPath: CommandLine.arguments[0])
 let homeDir = launchURL.deletingLastPathComponent()
 let appName = launchURL.lastPathComponent
 
-if CommandLine.arguments.count < 3 {
-    print("Usage example:")
-    print("\t\(appName) ./swagger.json ./swag/gen/folder {optional generator kind}")
-    print("\t\(appName) -ip \"https://api-im-public-stage1.synesis-sport.com/v2/api-docs\" ./output moya14")
-    print("\nOptions:")
-    print("\ti: access level - 'internal'")
-    print("\ta: add 'AccessTokenAuthorizable' conformance (.custom(\"\"))")
-    print("\tr: add 'Response' decoding")
-    print("\tp: add 'Server<Target: TargetType>: MoyaProvider<Target>' implementation")
-    print("\to: add default 'nil' value for generated struct init()")
-    print("\tv: use 'var' instead of 'let' for generated struct")
-    print("\nGenerator Kind:")
-    print("\tmoya13: generate Moya up to version 13.x.x")
-    print("\tmoya14: generate Moya from version 14.x.x - default value")
-    print("\nSpecific API update")
 
-} else {
-    var input, output: String!
-    var generatorOpts: SwaggerMoyaGenerator.Options = []
-    var generatorVersion: SwaggerMoyaGenerator.Version = .v14
-
-    for (index, arg) in CommandLine.arguments.enumerated() {
-        if index == 0 { continue }
-        if arg.hasPrefix("-") {
-            if arg.contains("i") { generatorOpts.insert(.internalLevel) }
-            if arg.contains("a") { generatorOpts.insert(.customAuthorization) }
-            if arg.contains("r") { generatorOpts.insert(.responseTypes) }
-            if arg.contains("p") { generatorOpts.insert(.moyaProvider) }
-            if arg.contains("o") { generatorOpts.insert(.optinalInit) }
-            if arg.contains("v") { generatorOpts.insert(.varStruct) }
-        } else if input == nil {
-            input = arg
-        } else if output == nil {
-            output = arg
+extension String {
+    static func toURL(_ string: String) throws -> URL {
+        if string.contains(":") {
+            return URL(string: string)!
+        } else if string.hasPrefix("./") {
+            return homeDir.appendingPathComponent(String(string.dropFirst().dropFirst()))
         } else {
-            if arg.lowercased() == "moya13" { generatorVersion = .v13 }
-            if arg.lowercased() == "moya14" { generatorVersion = .v14 }
-            break
+            return URL(fileURLWithPath: string)
         }
     }
-
-    let inputURL: URL
-    let outputURL: URL
-
-    if input.contains(":") {
-        inputURL = URL(string: input)!
-    } else if input.hasPrefix("./") {
-        inputURL = homeDir.appendingPathComponent(String(input.dropFirst().dropFirst()))
-    } else {
-        inputURL = URL(fileURLWithPath: input)
+    
+    static func toAuthorizationType(_ string: String) throws -> AuthorizationType {
+        if string == "basic" { return .basic }
+        if string == "bearer" { return .bearer }
+        if string.hasPrefix("custom") { return .custom(value: String(string.dropFirst(7))) }
+        return .none
     }
-
-    if output.hasPrefix("./") {
-        outputURL = homeDir.appendingPathComponent(String(output.dropFirst().dropFirst()))
-    } else {
-        outputURL = URL(fileURLWithPath: output)
-    }
-
-    let processor = SwaggerProcessor(jsonURL: inputURL)
-    processor.run()
-
-    let generator = SwaggerMoyaGenerator(outputFolder: outputURL, processor: processor, options: generatorOpts, version: generatorVersion)
-    generator.run()
-
-    #if DEBUG
-    print(outputURL.path)
-    #endif
 }
+
+
+struct Swagen: ParsableCommand {
+    @Argument(help: "Swagger JSON (local path or URL)", transform: String.toURL)
+    var inputURL: URL
+    
+    @Argument(help: "Output path", transform: String.toURL)
+    var outputURL: URL
+    
+    @Option(name: .customLong("access"), parsing: .next, help: "Generate code access modifier public|open|internal")
+    var accessModifier: String = "public"
+    
+    @Option(parsing: .next, help: "Add 'AccessTokenAuthorizable' conformance - basic|bearer|custom_{value}", transform: String.toAuthorizationType)
+    var authorizationType: AuthorizationType = .none
+    
+    @Flag(name: .customLong("decode-response"), help: "Add 'Response' decoding")
+    var decodeResponse: Bool = false
+    
+    @Flag(name: .customLong("add-server"), help: "Add 'Server<Target: TargetType>: MoyaProvider<Target>' implementation")
+    var generateServer: Bool = false
+    
+    @Flag(name: .customLong("init-default"), help: "Add default 'nil' value for generated struct init()")
+    var initDefault: Bool = false
+    
+    @Flag(name: .customLong("var-struct"), help: "Use 'var' instead of 'let' for generated structs")
+    var varStruct: Bool = false
+    
+    func run() throws {
+
+        let processor = SwaggerProcessor(jsonURL: inputURL)
+        processor.run()
+
+        let generator = SwaggerMoyaGenerator(outputFolder: outputURL, processor: processor)
+        generator.accessModifier = accessModifier
+        generator.authorizationType = authorizationType
+        generator.decodeResponse = decodeResponse
+        generator.generateServer = generateServer
+        generator.initDefault = initDefault
+        generator.varStruct = varStruct
+        generator.run()
+        
+        #if DEBUG
+        print(outputURL.path)
+        #endif
+    }
+}
+
+Swagen.main()
