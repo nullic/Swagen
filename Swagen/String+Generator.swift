@@ -276,7 +276,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     // MARK: - Async requests
 
     @discardableResult
-    \(genNonClassAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
+    \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<Void, ServerError>) -> Void) -> Moya.Cancellable {
 
         return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
             let result = Result<Void, Error> {
@@ -304,7 +304,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     }
 
     @discardableResult
-    \(genNonClassAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
+    \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none, completion: @escaping (Result<DataType, ServerError>) -> Void) -> Moya.Cancellable {
 
         return super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
             let result = Result<DataType, Error> {
@@ -337,7 +337,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
 
     // MARK: - Sync requests
 
-    \(genNonClassAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
+    \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
         assert(Thread.isMainThread == false)
 
         var result: Result<Void, ServerError>!
@@ -350,7 +350,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
         return try result.mapError(responseErrorMapper).get()
     }
 
-    \(genNonClassAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
+    \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
         assert(Thread.isMainThread == false)
 
         var result: Result<DataType, ServerError>!
