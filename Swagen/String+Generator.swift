@@ -196,14 +196,9 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
 
-    \(genNonClassAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
-        self.baseURL = baseURL
-        self.responseErrorMapper = responseErrorMapper
-        var plugins: [PluginType] = []
+    convenience \(genNonClassAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
 
-        if ProcessInfo.processInfo.environment["NETWORK_LOGS"] != nil || logLevel != nil {
-            plugins.append(NetworkLoggerPlugin(configuration: .init(logOptions: logLevel ?? .verbose)))
-        }
+        var plugins: [PluginType] = []
 
         if let accessToken = accessToken {
             plugins.append(AccessTokenPlugin(tokenClosure: { _ in accessToken }))
@@ -213,24 +208,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
             plugins.append(HTTPHeadersPlugin(headersClosure: headersClosure))
         }
 
-        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
-
-        super.init(endpointClosure: { target -> Endpoint in
-            let url: URL
-            if target.path.hasPrefix("/") {
-                url = baseURL.appendingPathComponent(String(target.path.dropFirst()))
-            } else {
-                url = baseURL.appendingPathComponent(target.path)
-            }
-
-            return Endpoint(
-                url: url.absoluteString,
-                sampleResponseClosure: { .networkResponse(200, target.sampleData) },
-                method: target.method,
-                task: target.task,
-                httpHeaderFields: target.headers
-            )
-        }, callbackQueue: callbackQueue, session: session, plugins: plugins)
+        self.init(baseURL: baseURL, plugins: plugins, logLevel: logLevel, protocolClasses: protocolClasses, responseErrorMapper: responseErrorMapper)
     }
 
     \(genNonClassAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
