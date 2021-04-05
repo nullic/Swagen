@@ -220,7 +220,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
             serverPlugins.append(NetworkLoggerPlugin(configuration: .init(logOptions: logLevel ?? .verbose)))
         }
 
-        if serverPlugins.isEmpty == false {
+        if plugins.isEmpty == false {
             serverPlugins.append(contentsOf: plugins)
         }
 
