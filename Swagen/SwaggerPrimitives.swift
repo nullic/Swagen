@@ -13,6 +13,7 @@ enum ParameterPosition: String {
     case query
     case header
     case formData
+    case path
 }
 
 enum ParameterType: String {

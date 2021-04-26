@@ -112,7 +112,7 @@ class SwaggerMoyaGenerator {
         strings.append("")
         strings.append("\(indent)\(genNonClassAccessLevel) var path: String {")
         strings.append("\(indent)\(indent)switch self {")
-        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseName): return \"\($0.path)\"" }))
+        strings.append(contentsOf: operations.map({ "\(indent)\(indent)case .\($0.caseWithParams(position: [.path])): return \"\($0.moyaPath)\"" }))
         strings.append("\(indent)\(indent)}")
         strings.append("\(indent)}")
         strings.append("")

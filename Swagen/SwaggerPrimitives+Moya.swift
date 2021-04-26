@@ -76,6 +76,15 @@ extension Operation {
         return needParams == false ? caseName : "\(caseName)(\(sortedParameters.map({ position.contains($0.in) ? "let \($0.nameSwiftString)" : "_" }).joined(separator: ", ")))"
     }
     
+    var moyaPath: String {
+        let params = parameters.filter { $0.in == .path }
+        var result = path
+        for param in params {
+            result = result.replacingOccurrences(of: "{\(param.name)}", with: "\\(\(param.nameSwiftString))")
+        }
+        return result
+    }
+    
     var moyaTask: String {
         let body = parameters.filter { $0.in == .body }
         let query = parameters.filter { $0.in == .query }
