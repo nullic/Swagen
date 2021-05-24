@@ -224,7 +224,8 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
             serverPlugins.append(contentsOf: plugins)
         }
 
-        let session = Server<Target>.alamofireSessionWith(protocolClasses: protocolClasses)
+        let configuration = type(of: self).alamofireSessionConfiguration(protocolClasses: protocolClasses)
+        let session = Session(configuration: configuration, startRequestsImmediately: false)
 
         super.init(endpointClosure: { target -> Endpoint in
             let url: URL
@@ -244,11 +245,11 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
         }, callbackQueue: callbackQueue, session: session, plugins: serverPlugins)
     }
 
-    private static func alamofireSessionWith(protocolClasses: [AnyClass]?) -> Session {
+    \(genAccessLevel) class func alamofireSessionConfiguration(protocolClasses: [AnyClass]?) -> URLSessionConfiguration {
         let configuration = URLSessionConfiguration.default
         configuration.protocolClasses = protocolClasses
         configuration.headers = .default
-        return Session(configuration: configuration, startRequestsImmediately: false)
+        return configuration
     }
 
     // MARK: - Async requests
