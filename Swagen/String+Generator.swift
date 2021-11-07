@@ -192,6 +192,24 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
     case unknown(_: Error)
 }
 
+extension Result {
+    func mappedError() -> Result<Success, ServerError>  {
+        return mapError { (error: Error) -> ServerError in
+            if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
+                if (underlying as NSError).domain == NSURLErrorDomain {
+                    return ServerError.connection(underlying)
+                } else {
+                    return ServerError.unknown(underlying)
+                }
+            } else if let error = error as? ServerError {
+                return error
+            } else {
+                return ServerError.unknown(error)
+            }
+        }
+    }
+}
+
 \(genAccessLevel) class Server<Target: TargetType>: MoyaProvider<Target> {
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
@@ -266,19 +284,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
                 return Void()
             }
 
-            completion(result.mapError { (error: Error) -> ServerError in
-                if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
-                    if (underlying as NSError).domain == NSURLErrorDomain {
-                        return ServerError.connection(underlying)
-                    } else {
-                        return ServerError.unknown(underlying)
-                    }
-                } else if let error = error as? ServerError {
-                    return error
-                } else {
-                    return ServerError.unknown(error)
-                }
-            })
+            completion(result.mappedError())
         }
     }
 
@@ -298,19 +304,7 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
                 }
             }
 
-            completion(result.mapError { (error: Error) -> ServerError in
-                if let error = error as? MoyaError, case .underlying(let underlying, _) = error {
-                    if (underlying as NSError).domain == NSURLErrorDomain {
-                        return ServerError.connection(underlying)
-                    } else {
-                        return ServerError.unknown(underlying)
-                    }
-                } else if let error = error as? ServerError {
-                    return error
-                } else {
-                    return ServerError.unknown(error)
-                }
-            })
+            completion(result.mappedError())
         }
     }
 
@@ -340,6 +334,46 @@ fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
         }
         semaphore.wait()
         return try result.mapError(responseErrorMapper).get()
+    }
+
+    // MARK: - Async/Await requests
+
+    @available(iOS 15.0.0, *)
+    \(genAccessLevel)  func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
+                let result = Result<Void, Error> {
+                    let response = try responseResult.get()
+                    guard response.statusCode >= 200, response.statusCode < 300 else {
+                        throw ServerError.invalidResponseCode(response.statusCode, response.data)
+                    }
+                    return Void()
+                }
+                
+                continuation.resume(with: result.mappedError())
+            }
+        }
+    }
+    
+    @available(iOS 15.0.0, *)
+    \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws -> DataType {
+        return try await withCheckedThrowingContinuation { continuation in
+            super.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
+                let result = Result<DataType, Error> {
+                    let response = try responseResult.get()
+                    guard response.statusCode >= 200, response.statusCode < 300 else {
+                        throw ServerError.invalidResponseCode(response.statusCode, response.data)
+                    }
+                    do {
+                        return try JSONDecoder().decodeSafe(DataType.self, from: response.data)
+                    } catch {
+                        throw ServerError.decoding(error)
+                    }
+                }
+                
+                continuation.resume(with: result.mappedError())
+            }
+        }
     }
 }
 

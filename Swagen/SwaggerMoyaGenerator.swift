@@ -210,6 +210,24 @@ class SwaggerMoyaGenerator {
             strings.append(ops.joined(separator: "\n\n"))
             strings.append("}")
         }
+        
+        // Responses
+        if generateServer {
+            strings.append("")
+            strings.append("// MARK: - Async/Await Requests")
+            strings.append("")
+            strings.append("@available(iOS 15.0.0, *)")
+            strings.append("extension Server where Target == \(name) {")
+            let ops: [String] = operations.map { op -> String in
+                var subs: [String] = []
+                subs.append("\(indent)\(genNonClassAccessLevel) func \(op.funcDeclaration) async throws -> \(op.firstSuccessResponseType) {")
+                subs.append("\(indent)\(indent)return try await self.request(.\(op.caseUsage))")
+                subs.append("\(indent)}")
+                return subs.joined(separator: "\n")
+            }
+            strings.append(ops.joined(separator: "\n\n"))
+            strings.append("}")
+        }
 
 
         return strings.joined(separator: "\n")
