@@ -339,20 +339,32 @@ extension Result {
     // MARK: - Async/Await requests
 
     @available(iOS 15.0.0, *)
-    \(genAccessLevel)  func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            self.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
-                continuation.resume(with: responseResult)
+    \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws {
+        var cancellable: Moya.Cancellable?
+
+        return try await withTaskCancellationHandler {
+            return try await withCheckedThrowingContinuation { continuation in
+                cancellable = self.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
+                    continuation.resume(with: responseResult)
+                }
             }
+        } onCancel: { [cancellable] in
+            cancellable?.cancel()
         }
     }
     
     @available(iOS 15.0.0, *)
     \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws -> DataType {
-        return try await withCheckedThrowingContinuation { continuation in
-            self.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
-                continuation.resume(with: responseResult)
+        var cancellable: Moya.Cancellable?
+
+        return try await withTaskCancellationHandler {
+            return try await withCheckedThrowingContinuation { continuation in
+                cancellable = self.request(target, callbackQueue: callbackQueue, progress: progress) { responseResult in
+                    continuation.resume(with: responseResult)
+                }
             }
+        } onCancel: { [cancellable] in
+            cancellable?.cancel()
         }
     }
 }
