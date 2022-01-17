@@ -12,6 +12,7 @@ let reserverWords = ["Type", "Self", "self", "Codable", "default", "public", "pr
 let indent = "    "
 var genAccessLevel = "public"
 var genNonClassAccessLevel = "public"
+var genAsyncAwaitVersion = ""
 
 
 extension String {
@@ -312,6 +313,7 @@ extension Result {
 
     \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
         assert(Thread.isMainThread == false)
+        dispatchPrecondition(condition: DispatchPredicate.notOnQueue(.main))
 
         var result: Result<Void, ServerError>!
         let semaphore = DispatchSemaphore(value: 0)
@@ -325,6 +327,7 @@ extension Result {
 
     \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
         assert(Thread.isMainThread == false)
+        dispatchPrecondition(condition: DispatchPredicate.notOnQueue(.main))
 
         var result: Result<DataType, ServerError>!
         let semaphore = DispatchSemaphore(value: 0)
@@ -338,7 +341,7 @@ extension Result {
 
     // MARK: - Async/Await requests
 
-    @available(iOS 15.0.0, *)
+    \(genAsyncAwaitVersion)
     \(genAccessLevel) func request(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws {
         var cancellable: Moya.Cancellable?
 
@@ -353,7 +356,7 @@ extension Result {
         }
     }
     
-    @available(iOS 15.0.0, *)
+    \(genAsyncAwaitVersion)
     \(genAccessLevel) func request<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) async throws -> DataType {
         var cancellable: Moya.Cancellable?
 

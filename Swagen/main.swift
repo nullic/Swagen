@@ -48,6 +48,9 @@ struct Swagen: ParsableCommand {
     @Option(parsing: .next, help: "Add 'AccessTokenAuthorizable' conformance - basic|bearer|custom_{value}", transform: String.toAuthorizationType)
     var authorizationType: AuthorizationType = .none
     
+    @Option(name: .customLong("async-await-avail"), parsing: .next, help: "Async / await availability modifier. For example: @available(iOS 15.0.0, *)")
+    var asyncAwaitVersion: String = "@available(iOS 15.0.0, *)"
+    
     @Flag(name: .customLong("decode-response"), help: "Add 'Response' decoding")
     var decodeResponse: Bool = false
     
@@ -72,6 +75,7 @@ struct Swagen: ParsableCommand {
         generator.generateServer = generateServer
         generator.initDefault = initDefault
         generator.varStruct = varStruct
+        generator.asyncAwaitVersion = asyncAwaitVersion
         generator.run()
         
         #if DEBUG
