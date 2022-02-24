@@ -244,7 +244,7 @@ extension Result {
         }
 
         let configuration = type(of: self).alamofireSessionConfiguration(protocolClasses: protocolClasses)
-        let session = Session(configuration: configuration, startRequestsImmediately: false)
+        let session = type(of: self).alamofireSession(for: configuration)
 
         super.init(endpointClosure: { target -> Endpoint in
             let url: URL
@@ -269,6 +269,10 @@ extension Result {
         configuration.protocolClasses = protocolClasses
         configuration.headers = .default
         return configuration
+    }
+
+    \(genAccessLevel) class func alamofireSession(for configuration: URLSessionConfiguration) -> Session {
+        return Session(configuration: configuration, startRequestsImmediately: false)
     }
 
     // MARK: - Async requests
