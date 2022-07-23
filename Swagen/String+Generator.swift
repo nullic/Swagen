@@ -182,6 +182,7 @@ let targetTypeResponseCode =
 let server14File =
 """
 \(genFilePrefix)
+import Alamofire
 import Moya
 
 fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
@@ -215,7 +216,7 @@ extension Result {
     let baseURL: URL
     let responseErrorMapper: (ServerError) -> Error
 
-    convenience \(genNonClassAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    convenience \(genNonClassAccessLevel) init(baseURL: URL, addHeadersClosure: HTTPHeadersPlugin.HTTPHeadersClosure? = nil, accessToken: String? = nil, logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, eventMonitors: [Alamofire.EventMonitor] = [], responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
 
         var plugins: [PluginType] = []
 
@@ -227,10 +228,10 @@ extension Result {
             plugins.append(HTTPHeadersPlugin(headersClosure: headersClosure))
         }
 
-        self.init(baseURL: baseURL, plugins: plugins, logLevel: logLevel, protocolClasses: protocolClasses, responseErrorMapper: responseErrorMapper)
+        self.init(baseURL: baseURL, plugins: plugins, logLevel: logLevel, protocolClasses: protocolClasses, eventMonitors: eventMonitors, responseErrorMapper: responseErrorMapper)
     }
 
-    \(genNonClassAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
+    \(genNonClassAccessLevel) init(baseURL: URL, plugins: [Moya.PluginType] = [], logLevel: Moya.NetworkLoggerPlugin.Configuration.LogOptions? = nil, protocolClasses: [AnyClass]? = nil, eventMonitors: [Alamofire.EventMonitor] = [], responseErrorMapper: @escaping (ServerError) -> Error = { $0 }) {
         self.baseURL = baseURL
         self.responseErrorMapper = responseErrorMapper
         var serverPlugins: [PluginType] = []
@@ -244,7 +245,7 @@ extension Result {
         }
 
         let configuration = type(of: self).alamofireSessionConfiguration(protocolClasses: protocolClasses)
-        let session = type(of: self).alamofireSession(for: configuration)
+        let session = type(of: self).alamofireSession(for: configuration, eventMonitors: eventMonitors)
 
         super.init(endpointClosure: { target -> Endpoint in
             let url: URL
@@ -271,8 +272,8 @@ extension Result {
         return configuration
     }
 
-    \(genAccessLevel) class func alamofireSession(for configuration: URLSessionConfiguration) -> Session {
-        return Session(configuration: configuration, startRequestsImmediately: false)
+    \(genAccessLevel) class func alamofireSession(for configuration: URLSessionConfiguration, eventMonitors: [Alamofire.EventMonitor] = []) -> Session {
+        return Session(configuration: configuration, startRequestsImmediately: false, eventMonitors: eventMonitors)
     }
 
     // MARK: - Async requests
