@@ -63,6 +63,9 @@ struct Swagen: ParsableCommand {
     @Flag(name: .customLong("var-struct"), help: "Use 'var' instead of 'let' for generated structs")
     var varStruct: Bool = false
     
+    @Flag(name: .customLong("sync-on-main"), help: "Allow sync operations on .main queue/thread")
+    var syncOnMain: Bool = false
+    
     func run() throws {
 
         let processor = SwaggerProcessor(jsonURL: inputURL)
@@ -76,6 +79,7 @@ struct Swagen: ParsableCommand {
         generator.initDefault = initDefault
         generator.varStruct = varStruct
         generator.asyncAwaitVersion = asyncAwaitVersion
+        generator.syncOnMain = syncOnMain
         generator.run()
         
         #if DEBUG

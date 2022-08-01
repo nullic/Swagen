@@ -15,6 +15,13 @@ var genNonClassAccessLevel = "public"
 var genAsyncAwaitVersion = ""
 
 
+let defaultSyncMainCheck = """
+        assert(Thread.isMainThread == false)
+        dispatchPrecondition(condition: DispatchPredicate.notOnQueue(.main))
+"""
+
+var genSyncMainCheck = defaultSyncMainCheck
+
 extension String {
     var escaped: String {
         var result = self.filter { $0.isLetter || $0.isNumber || $0 == "_" }
@@ -317,8 +324,7 @@ extension Result {
     // MARK: - Sync requests
 
     \(genAccessLevel) func response(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws {
-        assert(Thread.isMainThread == false)
-        dispatchPrecondition(condition: DispatchPredicate.notOnQueue(.main))
+\(genSyncMainCheck)
 
         var result: Result<Void, ServerError>!
         let semaphore = DispatchSemaphore(value: 0)
@@ -331,8 +337,7 @@ extension Result {
     }
 
     \(genAccessLevel) func response<DataType: Decodable>(_ target: Target, callbackQueue: DispatchQueue? = .none, progress: ProgressBlock? = .none) throws -> DataType {
-        assert(Thread.isMainThread == false)
-        dispatchPrecondition(condition: DispatchPredicate.notOnQueue(.main))
+\(genSyncMainCheck)
 
         var result: Result<DataType, ServerError>!
         let semaphore = DispatchSemaphore(value: 0)

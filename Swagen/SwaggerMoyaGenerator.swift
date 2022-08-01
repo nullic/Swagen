@@ -29,6 +29,7 @@ class SwaggerMoyaGenerator {
     var initDefault: Bool = false
     var varStruct: Bool = false
     var asyncAwaitVersion: String = "@available(iOS 15.0.0, *)"
+    var syncOnMain: Bool = false
 
     init(outputFolder: URL, processor: SwaggerProcessor) {
         self.outputFolder = outputFolder
@@ -38,6 +39,7 @@ class SwaggerMoyaGenerator {
     }
 
     func run() {
+        genSyncMainCheck = syncOnMain ? "" : defaultSyncMainCheck
         genAccessLevel = accessModifier
         genNonClassAccessLevel = nonClassAccessModifier
         genAsyncAwaitVersion = asyncAwaitVersion
