@@ -14,6 +14,8 @@ var genAccessLevel = "public"
 var genNonClassAccessLevel = "public"
 var genAsyncAwaitVersion = ""
 
+var genAsyncSyncRequests = ""
+var genAsyncAwaitRequests = ""
 
 let defaultSyncMainCheck = """
         assert(Thread.isMainThread == false)
@@ -283,6 +285,14 @@ extension Result {
         return Session(configuration: configuration, startRequestsImmediately: false, eventMonitors: eventMonitors)
     }
 
+\(genAsyncSyncRequests)
+
+\(genAsyncAwaitRequests)
+}
+
+"""
+
+let asyncSyncRequests = """
     // MARK: - Async requests
 
     @discardableResult
@@ -348,7 +358,9 @@ extension Result {
         semaphore.wait()
         return try result.mapError(responseErrorMapper).get()
     }
+"""
 
+let asyncAwaitRequests = """
     // MARK: - Async/Await requests
 
     \(genAsyncAwaitVersion)
@@ -380,6 +392,4 @@ extension Result {
             cancellable?.cancel()
         }
     }
-}
-
 """

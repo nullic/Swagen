@@ -32,6 +32,18 @@ extension String {
         if string.hasPrefix("custom") { return .custom(value: String(string.dropFirst(7))) }
         return .none
     }
+    
+    static func toRequestsStyle(_ string: String) throws -> RequestsStyle {
+        if string.lowercased() == "async" { return .async }
+        if string.lowercased() == "asyncawait" { return .asyncAwait }
+        return .both
+    }
+}
+
+enum RequestsStyle {
+    case async
+    case asyncAwait
+    case both
 }
 
 
@@ -48,8 +60,14 @@ struct Swagen: ParsableCommand {
     @Option(parsing: .next, help: "Add 'AccessTokenAuthorizable' conformance - basic|bearer|custom_{value}", transform: String.toAuthorizationType)
     var authorizationType: AuthorizationType = .none
     
+    @Option(name: .customLong("server-requests-style"), parsing: .next, help: "Generated server requests style - async|asyncawait|both", transform: String.toRequestsStyle)
+    var serverRequestsStyle: RequestsStyle = .async
+    
     @Option(name: .customLong("async-await-avail"), parsing: .next, help: "Async / await availability modifier. For example: @available(iOS 15.0.0, *)")
     var asyncAwaitVersion: String = "@available(iOS 15.0.0, *)"
+    
+    @Option(name: .customLong("base-url"), parsing: .next, help: "Custom base server URL", transform: String.toURL)
+    var baseURL: URL?
     
     @Flag(name: .customLong("decode-response"), help: "Add 'Response' decoding")
     var decodeResponse: Bool = false
@@ -68,10 +86,11 @@ struct Swagen: ParsableCommand {
     
     func run() throws {
 
-        let processor = SwaggerProcessor(jsonURL: inputURL)
+        let processor = SwaggerProcessor(jsonURL: inputURL, customBaseURL: baseURL)
         processor.run()
 
         let generator = SwaggerMoyaGenerator(outputFolder: outputURL, processor: processor)
+        generator.serverRequestsStyle = serverRequestsStyle
         generator.accessModifier = accessModifier
         generator.authorizationType = authorizationType
         generator.decodeResponse = decodeResponse

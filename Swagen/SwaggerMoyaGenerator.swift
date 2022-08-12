@@ -23,6 +23,7 @@ class SwaggerMoyaGenerator {
         }
     }
     
+    var serverRequestsStyle: RequestsStyle = .async
     var authorizationType: AuthorizationType = .none
     var decodeResponse: Bool = false
     var generateServer: Bool = false
@@ -43,6 +44,19 @@ class SwaggerMoyaGenerator {
         genAccessLevel = accessModifier
         genNonClassAccessLevel = nonClassAccessModifier
         genAsyncAwaitVersion = asyncAwaitVersion
+        
+        switch serverRequestsStyle {
+        case .async:
+            genAsyncSyncRequests = asyncSyncRequests
+            genAsyncAwaitRequests = ""
+        case .asyncAwait:
+            genAsyncSyncRequests = ""
+            genAsyncAwaitRequests = asyncAwaitRequests
+        case .both:
+            genAsyncSyncRequests = asyncSyncRequests
+            genAsyncAwaitRequests = asyncAwaitRequests
+        }
+
         generateModels()
         generateAPI()
     }
@@ -175,7 +189,7 @@ class SwaggerMoyaGenerator {
         }
 
         // Responses
-        if generateServer {
+        if generateServer, !genAsyncSyncRequests.isEmpty {
             strings.append("")
             strings.append("// MARK: - Sync Requests")
             strings.append("")
@@ -192,7 +206,7 @@ class SwaggerMoyaGenerator {
         }
 
         // Responses
-        if generateServer {
+        if generateServer, !genAsyncSyncRequests.isEmpty {
             strings.append("")
             strings.append("// MARK: - Async Requests")
             strings.append("")
@@ -216,11 +230,11 @@ class SwaggerMoyaGenerator {
         }
         
         // Responses
-        if generateServer {
+        if generateServer, !genAsyncAwaitRequests.isEmpty {
             strings.append("")
             strings.append("// MARK: - Async/Await Requests")
             strings.append("")
-            strings.append("@available(iOS 15.0.0, *)")
+            strings.append(genAsyncAwaitVersion)
             strings.append("extension Server where Target == \(name) {")
             let ops: [String] = operations.map { op -> String in
                 var subs: [String] = []

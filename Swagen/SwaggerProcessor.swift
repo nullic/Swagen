@@ -10,6 +10,7 @@ import Foundation
 
 class SwaggerProcessor {
     let jsonURL: URL
+    let customBaseURL: URL?
     private var json: NSDictionary?
 
     private(set) var schemes: [String: ObjectScheme] = [:]
@@ -17,16 +18,19 @@ class SwaggerProcessor {
     private(set) var operationsByTag: [String: [Operation]] = [:]
     private(set) var host: String!
     private(set) var basePath: String!
-    var baseURL: URL! {
+    var jsonBaseURL: URL! {
         var comps = URLComponents()
         comps.scheme = "https"
         comps.host = host
         comps.path = basePath
         return comps.url
     }
+    
+    var baseURL: URL { customBaseURL ?? jsonBaseURL }
 
-    init(jsonURL: URL) {
+    init(jsonURL: URL, customBaseURL: URL?) {
         self.jsonURL = jsonURL
+        self.customBaseURL = customBaseURL
     }
 
     func run() {
