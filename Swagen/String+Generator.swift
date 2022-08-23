@@ -139,14 +139,14 @@ extension JSONDecoder {
 
 \(genNonClassAccessLevel) enum FileValue {
     case data(value: Foundation.Data, fileName: String, mimeType: String)
-    case url(value: Foundation.URL)
+    case url(value: Foundation.URL, fileName: String, mimeType: String)
 
     func moyaFormData(name: String) -> MultipartFormData {
         switch self {
         case .data(let value, let fileName, let mimeType):
             return MultipartFormData(provider: .data(value), name: name, fileName: fileName, mimeType: mimeType)
-        case .url(let value):
-            return MultipartFormData(provider: .file(value), name: name)
+        case .url(let value, let fileName, let mimeType):
+            return MultipartFormData(provider: .file(value), name: name, fileName: fileName, mimeType: mimeType)
         }
     }
 }
