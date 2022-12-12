@@ -120,7 +120,16 @@ class SwaggerMoyaGenerator {
         
         // Defenition
         strings.append("\(genNonClassAccessLevel) enum \(name) {")
-        strings.append(operations.map({ "\($0.caseDocumetation)\n\(indent)case \($0.caseDeclaration)" }).joined(separator: "\n\n"))
+        for (index, op) in operations.enumerated() {
+            strings.append(op.caseDocumetation)
+            if op.deprecated {
+                strings.append("\(indent)@available(*, deprecated)")
+            }
+            strings.append("\(indent)case \(op.caseDeclaration)")
+            if index != operations.count - 1  {
+                strings.append("")
+            }
+        }
         strings.append("}")
         strings.append("")
         
@@ -196,6 +205,9 @@ class SwaggerMoyaGenerator {
             strings.append("extension Server where Target == \(name) {")
             let ops: [String] = operations.map { op -> String in
                 var subs: [String] = []
+                if op.deprecated {
+                    subs.append("\(indent)@available(*, deprecated)")
+                }
                 subs.append("\(indent)\(genNonClassAccessLevel) func \(op.funcDeclaration) throws -> \(op.firstSuccessResponseType) {")
                 subs.append("\(indent)\(indent)return try self.response(.\(op.caseUsage))")
                 subs.append("\(indent)}")
@@ -219,6 +231,9 @@ class SwaggerMoyaGenerator {
                     declaration = String(op.funcDeclaration.dropLast()) + ", completion: @escaping (Result<\(op.firstSuccessResponseType), ServerError>) -> Void)"
                 }
                 var subs: [String] = []
+                if op.deprecated {
+                    subs.append("\(indent)@available(*, deprecated)")
+                }
                 subs.append("\(indent)@discardableResult")
                 subs.append("\(indent)\(genNonClassAccessLevel) func \(declaration) -> Moya.Cancellable {")
                 subs.append("\(indent)\(indent)return self.request(.\(op.caseUsage), completion: completion)")
@@ -238,6 +253,9 @@ class SwaggerMoyaGenerator {
             strings.append("extension Server where Target == \(name) {")
             let ops: [String] = operations.map { op -> String in
                 var subs: [String] = []
+                if op.deprecated {
+                    subs.append("\(indent)@available(*, deprecated)")
+                }
                 subs.append("\(indent)\(genNonClassAccessLevel) func \(op.funcDeclaration) async throws -> \(op.firstSuccessResponseType) {")
                 subs.append("\(indent)\(indent)return try await self.request(.\(op.caseUsage))")
                 subs.append("\(indent)}")

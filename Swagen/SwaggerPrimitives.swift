@@ -63,6 +63,7 @@ class Operation: CustomStringConvertible {
     let parameters: [OperationParameter]
     let responses: [String: OperationResult]
     let hasAuthorization: Bool
+    let deprecated: Bool
 
     let consumes: [String]
     let produces: [String]
@@ -79,6 +80,7 @@ class Operation: CustomStringConvertible {
         self.produces = info["produces"] as? [String] ?? []
 
         self.hasAuthorization = info["security"] != nil
+        self.deprecated = info["deprecated"] as? Bool ?? false
 
         var responses: [String: OperationResult] = [:]
         for (key, value) in (info["responses"] as! [String: [String: Any]]) {
