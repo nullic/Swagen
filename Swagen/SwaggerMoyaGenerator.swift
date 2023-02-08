@@ -31,6 +31,7 @@ class SwaggerMoyaGenerator {
     var varStruct: Bool = false
     var asyncAwaitVersion: String = "@available(iOS 15.0.0, *)"
     var syncOnMain: Bool = false
+    var useAsyncCallbackQueue: Bool = false
 
     init(outputFolder: URL, processor: SwaggerProcessor) {
         self.outputFolder = outputFolder
@@ -44,6 +45,7 @@ class SwaggerMoyaGenerator {
         genAccessLevel = accessModifier
         genNonClassAccessLevel = nonClassAccessModifier
         genAsyncAwaitVersion = asyncAwaitVersion
+        genAsyncCallbackQueue = useAsyncCallbackQueue
         
         switch serverRequestsStyle {
         case .async:

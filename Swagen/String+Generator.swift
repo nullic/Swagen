@@ -17,6 +17,8 @@ var genAsyncAwaitVersion = ""
 var genAsyncSyncRequests = ""
 var genAsyncAwaitRequests = ""
 
+var genAsyncCallbackQueue: Bool = false
+
 let defaultSyncMainCheck = """
         assert(Thread.isMainThread == false)
         dispatchPrecondition(condition: DispatchPredicate.notOnQueue(.main))
@@ -188,13 +190,16 @@ let targetTypeResponseCode =
 """
 
 
+let syncCallbackDefinition = "private let callbackQueue = DispatchQueue(label: \"network.callback.queue\")"
+let asyncCallbackDefinition = "private let callbackQueue = DispatchQueue(label: \"network.callback.queue\", qos: .utility, attributes: [.concurrent], autoreleaseFrequency: .workItem)"
+
 let server14File =
 """
 \(genFilePrefix)
 import Alamofire
 import Moya
 
-fileprivate let callbackQueue = DispatchQueue(label: "network.callback.queue")
+\(genAsyncCallbackQueue ? asyncCallbackDefinition : syncCallbackDefinition)
 
 \(genNonClassAccessLevel) enum ServerError: Error {
     case invalidResponseCode(_: Int, _: Data)

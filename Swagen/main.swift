@@ -84,6 +84,9 @@ struct Swagen: ParsableCommand {
     @Flag(name: .customLong("sync-on-main"), help: "Allow sync operations on .main queue/thread")
     var syncOnMain: Bool = false
     
+    @Flag(name: .customLong("async-callback"), help: "Use async callback queue")
+    var asyncCallback: Bool = false
+    
     func run() throws {
 
         let processor = SwaggerProcessor(jsonURL: inputURL, customBaseURL: baseURL)
@@ -99,6 +102,7 @@ struct Swagen: ParsableCommand {
         generator.varStruct = varStruct
         generator.asyncAwaitVersion = asyncAwaitVersion
         generator.syncOnMain = syncOnMain
+        generator.useAsyncCallbackQueue = asyncCallback
         generator.run()
         
         #if DEBUG
